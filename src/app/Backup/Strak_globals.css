@@ -1,0 +1,214 @@
+/* ===== BASIS ===== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --accent: #F48C00;
+  --bg: #f6f7f9;
+  --light: #f1f3f5;
+  --ai: #eef1f4;
+  --text: #111;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ===== LAYOUT ===== */
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 40px 16px;
+}
+
+.card {
+  width: 100%;
+  max-width: 1000px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+}
+
+/* ===== HEADER ===== */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+}
+
+/* ===== TABS ===== */
+
+.tabsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+}
+
+.tab {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.tab:hover {
+  background: #f3f4f6;
+}
+
+.tab.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+/* ===== AUDIO ===== */
+
+.audioBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.audioBtn:hover {
+  transform: scale(1.05);
+}
+
+/* ===== CHAT ===== */
+
+.chatBox {
+  height: 440px;
+  background: var(--light);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  margin-bottom: 18px;
+}
+
+.row {
+  display: flex;
+}
+
+.bubble {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.bubbleAi {
+  background: var(--ai);
+  border-bottom-left-radius: 6px;
+}
+
+.bubbleUser {
+  margin-left: auto;
+  background: rgba(244, 140, 0, 0.15);
+  border-bottom-right-radius: 6px;
+}
+
+.name {
+  font-size: 11px;
+  color: #777;
+  margin-bottom: 4px;
+}
+
+/* ===== INPUT ===== */
+
+.inputBar {
+  display: flex;
+  gap: 10px;
+}
+
+.input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.button {
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== FOOTER ===== */
+
+.footer {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+/* ===== KAART SYMBOLEN ===== */
+
+.suit-h { color: #d62828; }
+.suit-d { color: #d62828; }
+.suit-s { color: #111; }
+.suit-c { color: #111; }

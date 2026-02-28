@@ -1,0 +1,266 @@
+/* ===== BASIS ===== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --accent: #F48C00; /* Ziggo-oranje */
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f4f6f8;
+  color: #111;
+}
+
+/* ===== LAYOUT ===== */
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;   /* card + footer onder elkaar */
+  align-items: center;      /* horizontaal centreren */
+  justify-content: center;  /* verticaal centreren */
+  gap: 20px;                /* ruimte tussen card en footer */
+  padding: 40px 16px;
+}
+
+.card {
+  width: 100%;
+  max-width: 600px;        /* breder, zoals je eerder wilde */
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  flex: 0 0 auto;           /* niet krimpen */
+}
+
+/* ===== HEADER ===== */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.logoWrap {
+  width: 44px;
+  height: 44px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+}
+
+/* ===== TABS + AUDIO ===== */
+
+.tabsRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:18px;
+}
+
+.tabs{
+  display:flex;
+  gap:8px;
+  flex-wrap: wrap;
+}
+
+.tab{
+  padding:8px 16px;
+  border-radius:999px;
+  border:1px solid #ddd;
+  background:#f2f2f2;
+  cursor:pointer;
+  font-weight:500;
+  transition:0.2s ease;
+}
+
+.tab:hover{
+  background:#e7e7e7;
+}
+
+.tab.active{
+  background: var(--accent);
+  color:#ffffff;
+  border:1px solid var(--accent); /* lijkt randloos, maar is stabiel */
+}
+
+.audioBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.audioBtn:hover {
+  transform: scale(1.05);
+}
+
+.audioBtn.on{
+  animation:pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse{
+  0%{ transform:scale(1); }
+  50%{ transform:scale(1.06); }
+  100%{ transform:scale(1); }
+}
+
+/* ===== CHAT ===== */
+
+.chatBox {
+  height: 420px;
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f9fafb;
+  border: 1px solid #e6e6e6;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+}
+
+.bubble {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.bubbleUser {
+  margin-left: auto;
+  background: rgba(244, 140, 0, 0.18);  /* licht oranje */
+  color: #111;
+  border-bottom-right-radius: 6px;
+}
+
+.bubbleAi {
+  background: #eceff1;                 /* licht grijs */
+  color: #111;
+  border-bottom-left-radius: 6px;
+}
+
+.name {
+  font-size: 11px;
+  opacity: 0.6;
+  margin-bottom: 4px;
+}
+
+/* ===== TYPING DOTS ===== */
+
+.typingDots {
+  display: flex;
+  gap: 4px;
+}
+
+.typingDots span {
+  width: 6px;
+  height: 6px;
+  background: #999;
+  border-radius: 50%;
+  animation: blink 1.4s infinite both;
+}
+
+.typingDots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typingDots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0% { opacity: 0.2; }
+  20% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+/* ===== INPUT ===== */
+
+.inputBar {
+  display: flex;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.button {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.button:hover {
+  filter: brightness(0.95);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== FOOTER ===== */
+
+.footer {
+  font-size: 12px;
+  color: #777;
+  text-align: center;
+}
+
+/* ===== KAART SYMBOLEN ===== */
+
+.suit-h { color: #d62828; }
+.suit-d { color: #d62828; }
+.suit-s { color: #111; }
+.suit-c { color: #111; }
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 520px) {
+  .card { padding: 16px; }
+  .chatBox { height: 380px; }
+  .tab, .audioBtn { padding: 8px 12px; }
+}
