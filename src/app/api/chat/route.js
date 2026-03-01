@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { NextResponse } from "next/server";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -6,15 +7,22 @@ const client = new OpenAI({
 
 export async function POST(req) {
   try {
-    const { messages, mode } = await req.json();
+    // 1) Input lezen
+    const body = await req.json();
+    const messages = Array.isArray(body?.messages) ? body.messages : [];
+    const mode = body?.mode || "bieden";
 
-    const response = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
-        {
-          role: "system",
-          content: `You are Bridgecoach.
-Mode: ${mode || "bieden"}.
+    // 2) Simpele guard
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: "OPENAI_API_KEY ontbreekt in .env.local" },
+        { status: 500 }
+      );
+    }
+
+    // 3) Systeemtekst
+    const systemText = `You are Bridgecoach.
+Mode: ${mode}.
 
 Rules:
 - Use suit symbols ♠ ♥ ♦ ♣ (not words).
@@ -24,18 +32,23 @@ Rules:
 Mode guidance:
 - bieden: focus on bidding, conventions, points, shape, next bid.
 - spel: focus on declarer play, plan, entries, safety.
-- verdediging: focus on opening lead, signals, counting, defense plan.
-`,
-        },
+- verdediging: focus on opening lead, signals, counting, defense plan.`;
+
+    // 4) Call OpenAI Responses API
+    const response = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        { role: "system", content: systemText },
         ...messages,
       ],
       max_output_tokens: 300,
     });
 
-    return Response.json({ reply: response.output_text });
+    // 5) Antwoord terug
+    return NextResponse.json({ reply: response.output_text || "" });
   } catch (err) {
-    console.error(err);
-    return Response.json(
+    console.error("API /api/chat error:", err);
+    return NextResponse.json(
       { error: "Er ging iets mis met Bridgecoach." },
       { status: 500 }
     );

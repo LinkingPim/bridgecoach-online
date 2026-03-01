@@ -14,13 +14,6 @@ function renderSuits(text) {
   });
 }
 
-// Audio per tab (pas bestandsnamen aan zoals jij ze hebt)
-const AUDIO_BY_MODE = {
-  bieden: "/audio/bieden-1.m4a",
-  spel: "/audio/spel-1.m4a",
-  verdediging: "/audio/verdediging-1.m4a",
-};
-
 export default function Home() {
   const [mode, setMode] = useState("bieden");
   const [input, setInput] = useState("");
@@ -28,50 +21,41 @@ export default function Home() {
     { role: "assistant", content: "Hoi! Ik ben jouw Bridgecoach. Waar wil je hulp bij?" },
   ]);
   const [loading, setLoading] = useState(false);
+  const [showAudio, setShowAudio] = useState(true);
 
   const boxRef = useRef(null);
-
-  // Audio (optie C)
   const audioRef = useRef(null);
-  const [playing, setPlaying] = useState(false);
+
+  const AUDIO = {
+    bieden: {
+      title: "Basis van openingsbiedingen (1:12)",
+      src: "/audio/bieden-intro.m4a",
+    },
+    spel: {
+      title: "Speelplan maken (1:05)",
+      src: "/audio/spel-intro.m4a",
+    },
+    verdediging: {
+      title: "Goed uitkomen en signaleren (1:18)",
+      src: "/audio/verdediging-intro.m4a",
+    },
+  };
+
+  const audio = AUDIO[mode];
 
   useEffect(() => {
     boxRef.current?.scrollTo(0, boxRef.current.scrollHeight);
   }, [messages, loading]);
 
-  function stopAudio() {
-    const a = audioRef.current;
-    if (!a) return;
-    a.pause();
-    a.currentTime = 0;
-    setPlaying(false);
-  }
-
-  function changeMode(nextMode) {
-    setMode(nextMode);
-    stopAudio();
-  }
-
-  function toggleAudio() {
-    const a = audioRef.current;
-    if (!a) return;
-
-    if (a.paused) {
-      a.play();
-      setPlaying(true);
-    } else {
-      a.pause();
-      setPlaying(false);
-    }
-  }
-
-  function onAudioEnded() {
-    setPlaying(false);
-  }
-
   async function sendMessage() {
     const text = input.trim();
     if (!text || loading) return;
+
+    // Stop audio als gebruiker iets vraagt
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
 
     const newMessages = [...messages, { role: "user", content: text }];
     setMessages(newMessages);
@@ -82,7 +66,10 @@ export default function Home() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, mode }),
+        body: JSON.stringify({
+          messages: newMessages,
+          mode,
+        }),
       });
 
       const data = await res.json();
@@ -102,10 +89,14 @@ export default function Home() {
   return (
     <main className="container">
       <section className="card">
-        {/* HEADER */}
         <div className="header">
           <div className="logoWrap">
-            <Image src="/bridgecoach-logo.png" alt="Bridgecoach" width={44} height={44} />
+            <Image
+              src="/bridgecoach-logo.png"
+              alt="Bridgecoach"
+              width={44}
+              height={44}
+            />
           </div>
           <div>
             <h1 className="title">BRIDGECOACH</h1>
@@ -113,56 +104,74 @@ export default function Home() {
           </div>
         </div>
 
-        {/* TABS + AUDIO BUTTON (zelfde lijn, audio helemaal rechts) */}
-        <div className="tabsRow">
-          <div className="tabs">
-            <button
-              className={`tab ${mode === "bieden" ? "active" : ""}`}
-              onClick={() => changeMode("bieden")}
-            >
-              Bieden
-            </button>
-            <button
-              className={`tab ${mode === "spel" ? "active" : ""}`}
-              onClick={() => changeMode("spel")}
-            >
-              Spel
-            </button>
-            <button
-              className={`tab ${mode === "verdediging" ? "active" : ""}`}
-              onClick={() => changeMode("verdediging")}
-            >
-              Verdediging
-            </button>
-          </div>
-
+        {/* TABS */}
+        <div className="tabs">
           <button
-            type="button"
-            className={`audioBtn ${playing ? "on" : ""}`}
-            onClick={toggleAudio}
-            aria-label={playing ? "Pauze" : "Luister"}
-            title={playing ? "Pauze" : "Luister"}
+            className={`tab ${mode === "bieden" ? "active" : ""}`}
+            onClick={() => {
+              setMode("bieden");
+              setShowAudio(true);
+            }}
           >
-           {playing ? (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="6" y="4" width="4" height="16"></rect>
-    <rect x="14" y="4" width="4" height="16"></rect>
-  </svg>
-) : (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
-    <path d="M21 18a3 3 0 0 1-3 3h-1v-7h1a3 3 0 0 1 3 3z"></path>
-    <path d="M3 18a3 3 0 0 0 3 3h1v-7H6a3 3 0 0 0-3 3z"></path>
-  </svg>
-)}
+            Bieden
           </button>
 
-          {/* Verborgen audio */}
-          <audio ref={audioRef} onEnded={onAudioEnded} preload="none">
-            <source src={AUDIO_BY_MODE[mode]} type="audio/mp4" />
-            Je browser ondersteunt geen audio.
-          </audio>
+          <button
+            className={`tab ${mode === "spel" ? "active" : ""}`}
+            onClick={() => {
+              setMode("spel");
+              setShowAudio(true);
+            }}
+          >
+            Spel
+          </button>
+
+          <button
+            className={`tab ${mode === "verdediging" ? "active" : ""}`}
+            onClick={() => {
+              setMode("verdediging");
+              setShowAudio(true);
+            }}
+          >
+            Verdediging
+          </button>
         </div>
+
+        {/* AUDIO BLOK */}
+        {audio && showAudio && (
+          <div className="audioCard">
+            <div className="audioHead">
+              <div className="audioTitle">
+                🎧 Luistertip: <b>{audio.title}</b>
+              </div>
+              <button
+                className="audioHideBtn"
+                type="button"
+                onClick={() => setShowAudio(false)}
+              >
+                Verbergen
+              </button>
+            </div>
+
+            <audio
+              ref={audioRef}
+              className="audioPlayer"
+              controls
+              preload="none"
+              src={audio.src}
+            />
+          </div>
+        )}
+
+        {audio && !showAudio && (
+          <button
+            className="audioShowBtn"
+            type="button"
+            onClick={() => setShowAudio(true)}
+          >
+            🎧 Toon luistertip
+          </button>
+        )}
 
         {/* CHAT */}
         <div ref={boxRef} className="chatBox">
@@ -171,7 +180,9 @@ export default function Home() {
             return (
               <div key={i} className="row">
                 <div className={`bubble ${isUser ? "bubbleUser" : "bubbleAi"}`}>
-                  <div className="name">{isUser ? "Jij" : "Bridgecoach"}</div>
+                  <div className="name">
+                    {isUser ? "Jij" : "Bridgecoach"}
+                  </div>
                   {renderSuits(m.content)}
                 </div>
               </div>
@@ -182,7 +193,7 @@ export default function Home() {
             <div className="row">
               <div className="bubble bubbleAi">
                 <div className="name">Bridgecoach</div>
-                <div className="typingDots" aria-label="Bridgecoach is aan het typen">
+                <div className="typingDots">
                   <span></span><span></span><span></span>
                 </div>
               </div>
@@ -199,13 +210,19 @@ export default function Home() {
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             placeholder="Bijv: Partner opent 1SA, ik heb 8 punten…"
           />
-          <button className="button" onClick={sendMessage} disabled={loading}>
+          <button
+            className="button"
+            onClick={sendMessage}
+            disabled={loading}
+          >
             {loading ? "…" : "SEND"}
           </button>
         </div>
       </section>
 
-      <footer className="footer">Bridgecoach · beta · kort en duidelijk bridge-advies</footer>
+      <footer className="footer">
+        Bridgecoach · beta · kort en duidelijk bridge-advies
+      </footer>
     </main>
   );
 }
