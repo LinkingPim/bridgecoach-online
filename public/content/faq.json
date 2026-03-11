@@ -1,0 +1,100 @@
+{
+  "opening": {
+    "title": "FAQ Opening",
+    "options": [
+      {
+        "label": "Wanneer open ik?",
+        "children": [
+          {
+            "label": "12 punten of meer",
+            "answer": "Ja. Laten we dat rustig bekijken.\n\n## Wanneer open ik?\n\nMeestal open je met 12 punten of meer.\n\n## Waarom?\n\nMet minder punten is de kans groter dat jullie te hoog komen.\n\n## Samengevat\n\nOpen meestal vanaf 12 punten."
+          },
+          {
+            "label": "10 of 11 punten",
+            "answer": "Ja. Dat hangt af van je hand.\n\n## 10 of 11 punten\n\nMet 10 of 11 punten open je meestal niet standaard.\nSoms kan het wel met een mooie 5- of 6-kaart.\n\n## Samengevat\n\nMet 10 of 11 punten moet je voorzichtig zijn."
+          }
+        ]
+      },
+      {
+        "label": "Welke kleur open ik?",
+        "children": [
+          {
+            "label": "Ik heb een 5-kaart hoog",
+            "answer": "## Welke kleur open ik?\n\nMet een 5-kaart harten of schoppen open je meestal die hoge kleur.\n\n## Samengevat\n\nMet een 5-kaart hoog open je meestal 1♥ of 1♠."
+          },
+          {
+            "label": "Ik heb geen 5-kaart hoog",
+            "answer": "## Welke kleur open ik?\n\nDan open je meestal je langste lage kleur.\n\n## Samengevat\n\nGeen 5-kaart hoog? Kies dan meestal een lage kleur of 1SA als je hand regelmatig is."
+          }
+        ]
+      },
+      {
+        "label": "Wanneer open ik 1SA?",
+        "answer": "Ja. Laten we dat rustig bekijken.\n\n## Wanneer open ik 1SA?\n\nOpen 1SA met 15-17 punten en een regelmatige verdeling.\n\n## Regelmatige verdeling\n\nBijvoorbeeld:\n- 4-3-3-3\n- 4-4-3-2\n- 5-3-3-2\n\n## Samengevat\n\n1SA = 15-17 punten en een regelmatige hand."
+      }
+    ]
+  },
+
+  "bijbod": {
+    "title": "FAQ Bijbod",
+    "options": [
+      {
+        "label": "Wanneer steun ik partner?",
+        "children": [
+          {
+            "label": "Ik heb 3 kaarten steun",
+            "answer": "## Wanneer steun ik partner?\n\nMet 3 kaarten steun kun je partner vaak steunen, afhankelijk van je punten.\n\n## Samengevat\n\nMet 3 kaarten steun laat je vaak de fit zien."
+          },
+          {
+            "label": "Ik heb 4 kaarten steun",
+            "answer": "## Wanneer steun ik partner?\n\nMet 4 kaarten steun is het vaak goed om partner duidelijk te steunen.\n\n## Samengevat\n\n4 kaarten steun is meestal een duidelijke fit."
+          }
+        ]
+      },
+      {
+        "label": "Wat doe ik zonder steun?",
+        "children": [
+          {
+            "label": "Ik heb een eigen kleur",
+            "answer": "## Geen steun\n\nHeb je geen steun maar wel een eigen kleur, dan bied je vaak die kleur.\n\n## Samengevat\n\nGeen steun? Laat je eigen kleur zien als dat kan."
+          },
+          {
+            "label": "Ik heb een regelmatige hand",
+            "answer": "## Geen steun\n\nMet een regelmatige hand bied je vaak 1SA of 2SA, afhankelijk van je punten.\n\n## Samengevat\n\nGeen steun en vlakke hand? Denk aan SA."
+          }
+        ]
+      },
+      {
+        "label": "Wanneer bied ik 1SA?",
+        "answer": "## Wanneer bied ik 1SA?\n\nAls bijbod toont 1SA vaak ongeveer 6-9 punten, geen goede fit en een redelijk regelmatige hand.\n\n## Samengevat\n\n1SA is vaak een rustig, beperkt antwoord."
+      }
+    ]
+  },
+
+  "uitkomst": {
+    "title": "FAQ Uitkomst",
+    "options": [
+      {
+        "label": "Welke kleur kom ik uit?",
+        "children": [
+          {
+            "label": "Partner heeft een kleur geboden",
+            "answer": "## Welke kleur kom ik uit?\n\nAls partner een kleur heeft geboden, is dat vaak een goede aanwijzing.\n\n## Samengevat\n\nPartners kleur is vaak een logische uitkomst."
+          },
+          {
+            "label": "Partner heeft geen kleur geboden",
+            "answer": "## Welke kleur kom ik uit?\n\nDan kies je vaak een eigen lange kleur of een veilige kleur.\n\n## Samengevat\n\nGeen kleur van partner? Kijk naar je eigen lange kleur."
+          }
+        ]
+      },
+      {
+        "label": "Wat is een veilige uitkomst?",
+        "answer": "## Veilige uitkomst\n\nEen veilige uitkomst is vaak een lage kaart uit een niet-geboden kleur.\n\n## Samengevat\n\nKies veilig als je niet zeker weet wat goed is."
+      },
+      {
+        "label": "Wanneer kom ik uit in partners kleur?",
+        "answer": "## Partners kleur\n\nDat doe je vaak als partner duidelijk een kleur heeft aangegeven en je verwacht dat die kleur samen slagen kan opleveren.\n\n## Samengevat\n\nPartners kleur is vaak sterk als partner die bewust heeft laten zien."
+      }
+    ]
+  }
+}

@@ -25,21 +25,21 @@ body {
 .container {
   min-height: 100vh;
   display: flex;
-  flex-direction: column;   /* card + footer onder elkaar */
-  align-items: center;      /* horizontaal centreren */
-  justify-content: center;  /* verticaal centreren */
-  gap: 20px;                /* ruimte tussen card en footer */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
   padding: 40px 16px;
 }
 
 .card {
   width: 100%;
-  max-width: 600px;        /* breder, zoals je eerder wilde */
+  max-width: 600px;
   background: #ffffff;
   border-radius: 18px;
   padding: 24px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-  flex: 0 0 auto;           /* niet krimpen */
+  flex: 0 0 auto;
 }
 
 /* ===== HEADER ===== */
@@ -54,6 +54,13 @@ body {
 .logoWrap {
   width: 44px;
   height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+
+  background: transparent;
+  border: none;
 }
 
 .title {
@@ -100,7 +107,7 @@ body {
 .tab.active{
   background: var(--accent);
   color:#ffffff;
-  border:1px solid var(--accent); /* lijkt randloos, maar is stabiel */
+  border:1px solid var(--accent);
 }
 
 .audioBtn {
@@ -120,17 +127,90 @@ body {
 .audioBtn:hover {
   transform: scale(1.05);
 }
+/* ===== MINI PODCAST PLAYER ===== */
 
-.audioBtn.on{
-  animation:pulse 1.2s ease-in-out infinite;
+.playerRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
 }
 
-@keyframes pulse{
-  0%{ transform:scale(1); }
-  50%{ transform:scale(1.06); }
-  100%{ transform:scale(1); }
+.playerLeft{
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 
+.playerControls{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.iconBtn{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:none;
+  background: var(--accent);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:0.2s ease;
+}
+
+.iconBtn:hover{ transform: scale(1.05); }
+
+.iconBtn.secondary{
+  background:#f2f2f2;
+  color:#111;
+  border:1px solid #ddd;
+}
+
+.iconBtn.secondary svg{ stroke:#111; }
+
+.playerBar{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.timeRow{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  color:#666;
+}
+
+.seek{
+  width:100%;
+  accent-color: var(--accent);
+}
+
+.chapters{
+  margin-top:10px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.chapterBtn{
+  border:1px solid #ddd;
+  background:#fff;
+  border-radius:999px;
+  padding:6px 10px;
+  cursor:pointer;
+  font-size:12px;
+}
+
+.chapterBtn:hover{
+  background:#f5f5f5;
+}
 /* ===== CHAT ===== */
 
 .chatBox {
@@ -151,22 +231,23 @@ body {
 }
 
 .bubble {
-  max-width: 75%;
+  max-width: 85%;
   padding: 10px 14px;
   border-radius: 16px;
   font-size: 14px;
   line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .bubbleUser {
   margin-left: auto;
-  background: rgba(244, 140, 0, 0.18);  /* licht oranje */
+  background: rgba(244, 140, 0, 0.18);
   color: #111;
   border-bottom-right-radius: 6px;
 }
 
 .bubbleAi {
-  background: #eceff1;                 /* licht grijs */
+  background: #eceff1;
   color: #111;
   border-bottom-left-radius: 6px;
 }
@@ -174,7 +255,7 @@ body {
 .name {
   font-size: 11px;
   opacity: 0.6;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 /* ===== TYPING DOTS ===== */
@@ -182,6 +263,7 @@ body {
 .typingDots {
   display: flex;
   gap: 4px;
+  padding: 2px 0;
 }
 
 .typingDots span {
@@ -192,13 +274,8 @@ body {
   animation: blink 1.4s infinite both;
 }
 
-.typingDots span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typingDots span:nth-child(3) {
-  animation-delay: 0.4s;
-}
+.typingDots span:nth-child(2) { animation-delay: 0.2s; }
+.typingDots span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes blink {
   0% { opacity: 0.2; }
@@ -256,15 +333,82 @@ body {
 
 /* ===== KAART SYMBOLEN ===== */
 
+.suit{
+  font-weight: 800;
+}
+
 .suit-h { color: #d62828; }
 .suit-d { color: #d62828; }
 .suit-s { color: #111; }
 .suit-c { color: #111; }
+
+/* ===== KAARTDIAGRAM (bridgeboek-stijl) ===== */
+
+.handDiagram{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: inline-block;
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+
+.handRow{
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.handSuit{
+  width: 22px;
+  text-align: center;
+  font-weight: 900;
+  font-size: 1.05em;
+}
+
+.handCards{
+  font-weight: 900;     /* dikke letters */
+  letter-spacing: 0.6px;
+}
+
+/* ===== KLEINE KAARTJES ===== */
+
+.cardChips{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cardChip{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #dfe3e8;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+  font-weight: 900;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.cardChipRed{
+  color: #d62828;
+}
+
+.cardChipBlack{
+  color: #111;
+}
 
 /* ===== RESPONSIVE ===== */
 
 @media (max-width: 520px) {
   .card { padding: 16px; }
   .chatBox { height: 380px; }
-  .tab, .audioBtn { padding: 8px 12px; }
+  .tab { padding: 8px 12px; }
 }

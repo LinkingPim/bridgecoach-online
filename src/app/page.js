@@ -1,211 +1,785 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-function renderSuits(text) {
-  const parts = text.split(/(♠|♥|♦|♣)/g);
-  return parts.map((p, i) => {
-    if (p === "♥") return <span key={i} className="suit suit-h">♥</span>;
-    if (p === "♦") return <span key={i} className="suit suit-d">♦</span>;
-    if (p === "♠") return <span key={i} className="suit suit-s">♠</span>;
-    if (p === "♣") return <span key={i} className="suit suit-c">♣</span>;
-    return <span key={i}>{p}</span>;
-  });
-}
-
-// Audio per tab (pas bestandsnamen aan zoals jij ze hebt)
-const AUDIO_BY_MODE = {
-  bieden: "/audio/bieden-1.m4a",
-  spel: "/audio/spel-1.m4a",
-  verdediging: "/audio/verdediging-1.m4a",
-};
-
 export default function Home() {
-  const [mode, setMode] = useState("bieden");
+  const [tab, setTab] = useState("opening");
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hoi! Ik ben jouw Bridgecoach. Waar wil je hulp bij?" },
-  ]);
   const [loading, setLoading] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
-  const boxRef = useRef(null);
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      text: "Hoi! Ik ben jouw Bridgecoach. Waar wil je hulp bij?",
+      source: "system",
+    },
+  ]);
 
-  // Audio (optie C)
+  const [faqTree, setFaqTree] = useState(null);
+  const [faqOptions, setFaqOptions] = useState(null);
+  const [faqPath, setFaqPath] = useState([]);
+
+  const chatEndRef = useRef(null);
   const audioRef = useRef(null);
-  const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
-    boxRef.current?.scrollTo(0, boxRef.current.scrollHeight);
-  }, [messages, loading]);
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading, faqOptions]);
+
+  async function ensureFaqLoaded() {
+    if (faqTree) return faqTree;
+
+    const res = await fetch("/content/faq.json");
+    if (!res.ok) {
+      throw new Error("faq.json kon niet worden geladen.");
+    }
+
+    const data = await res.json();
+    setFaqTree(data);
+    return data;
+  }
+
+  function getTopicAudio(tabName) {
+    if (tabName === "opening") return "/audio/opening.m4a";
+    if (tabName === "bijbod") return "/audio/antwoorden.m4a";
+    if (tabName === "uitkomst") return "/audio/uitkomen.m4a";
+    return null;
+  }
+
+  function getPlaceholder(tabName) {
+    if (tabName === "opening") {
+      return "Bijv: Ik heb 13 punten en 5 harten, wat open ik?";
+    }
+    if (tabName === "bijbod") {
+      return "Bijv: Partner opent 1SA, ik heb 8 punten...";
+    }
+    if (tabName === "uitkomst") {
+      return "Bijv: Wat is een goede uitkomst tegen 3SA?";
+    }
+    return "Stel je bridgevraag...";
+  }
+
+  function getIntro(tabName) {
+    if (tabName === "opening") {
+      return "Hoi! Ik ben jouw Bridgecoach. Stel gerust een vraag over openingen.";
+    }
+    if (tabName === "bijbod") {
+      return "Hoi! Ik ben jouw Bridgecoach. Stel gerust een vraag over bijbiedingen.";
+    }
+    if (tabName === "uitkomst") {
+      return "Hoi! Ik ben jouw Bridgecoach. Stel gerust een vraag over uitkomsten.";
+    }
+    return "Hoi! Ik ben jouw Bridgecoach. Waar wil je hulp bij?";
+  }
 
   function stopAudio() {
-    const a = audioRef.current;
-    if (!a) return;
-    a.pause();
-    a.currentTime = 0;
-    setPlaying(false);
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    setIsAudioPlaying(false);
   }
 
-  function changeMode(nextMode) {
-    setMode(nextMode);
-    stopAudio();
-  }
+  function playTopicAudio() {
+    const file = getTopicAudio(tab);
+    if (!file) return;
 
-  function toggleAudio() {
-    const a = audioRef.current;
-    if (!a) return;
+    if (!audioRef.current) {
+      const audio = new Audio(file);
 
-    if (a.paused) {
-      a.play();
-      setPlaying(true);
+      audio.addEventListener("ended", () => {
+        setIsAudioPlaying(false);
+      });
+
+      audioRef.current = audio;
+    }
+
+    const currentAudio = audioRef.current;
+    const wantedSrc = window.location.origin + file;
+
+    if (currentAudio.src !== wantedSrc) {
+      currentAudio.pause();
+
+      const audio = new Audio(file);
+      audio.addEventListener("ended", () => {
+        setIsAudioPlaying(false);
+      });
+
+      audioRef.current = audio;
+
+      audio
+        .play()
+        .then(() => setIsAudioPlaying(true))
+        .catch((err) => {
+          console.error("Audio kon niet starten:", err);
+          setIsAudioPlaying(false);
+        });
+
+      return;
+    }
+
+    if (currentAudio.paused) {
+      currentAudio
+        .play()
+        .then(() => setIsAudioPlaying(true))
+        .catch((err) => {
+          console.error("Audio kon niet starten:", err);
+          setIsAudioPlaying(false);
+        });
     } else {
-      a.pause();
-      setPlaying(false);
+      currentAudio.pause();
+      setIsAudioPlaying(false);
     }
   }
 
-  function onAudioEnded() {
-    setPlaying(false);
-  }
-
-  async function sendMessage() {
-    const text = input.trim();
-    if (!text || loading) return;
-
-    const newMessages = [...messages, { role: "user", content: text }];
-    setMessages(newMessages);
-    setInput("");
-    setLoading(true);
-
+  async function loadFaq() {
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, mode }),
-      });
+      setLoading(true);
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Request failed");
+      const data = await ensureFaqLoaded();
+      const topicFaq = data?.[tab];
 
-      setMessages([...newMessages, { role: "assistant", content: data.reply }]);
-    } catch (e) {
-      setMessages([
-        ...newMessages,
-        { role: "assistant", content: "Er ging iets mis. Probeer het opnieuw." },
+      if (!topicFaq || !topicFaq.options) {
+        throw new Error("Geen FAQ gevonden voor dit onderwerp.");
+      }
+
+      setFaqOptions(topicFaq.options);
+      setFaqPath([]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: "Er ging iets mis bij het laden van de FAQ.",
+          source: "error",
+        },
       ]);
     } finally {
       setLoading(false);
     }
   }
 
+  function findNodeByPath(rootOptions, path) {
+    let currentOptions = rootOptions;
+
+    for (const step of path) {
+      const found = currentOptions.find((item) => item.label === step);
+      if (!found || !found.children) {
+        return currentOptions;
+      }
+      currentOptions = found.children;
+    }
+
+    return currentOptions;
+  }
+
+  async function handleFaqChoice(option) {
+    try {
+      const data = await ensureFaqLoaded();
+      const topicFaq = data?.[tab];
+
+      if (!topicFaq || !topicFaq.options) return;
+
+      if (option.children) {
+        setFaqPath((prev) => [...prev, option.label]);
+        setFaqOptions(option.children);
+        return;
+      }
+
+      if (option.answer) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            text: option.answer,
+            source: "faq",
+          },
+        ]);
+
+        setFaqOptions(null);
+        setFaqPath([]);
+      }
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: "Er ging iets mis bij de FAQ.",
+          source: "error",
+        },
+      ]);
+    }
+  }
+
+  async function handleFaqBack() {
+    try {
+      const data = await ensureFaqLoaded();
+      const topicFaq = data?.[tab];
+
+      if (!topicFaq || !topicFaq.options) return;
+
+      if (faqPath.length === 0) {
+        setFaqOptions(topicFaq.options);
+        return;
+      }
+
+      const newPath = faqPath.slice(0, -1);
+      const newOptions = findNodeByPath(topicFaq.options, newPath);
+
+      setFaqPath(newPath);
+      setFaqOptions(newOptions);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: "Er ging iets mis bij teruggaan in de FAQ.",
+          source: "error",
+        },
+      ]);
+    }
+  }
+
+  function resetFaq() {
+    setFaqOptions(null);
+    setFaqPath([]);
+  }
+
+  function switchTab(newTab) {
+    stopAudio();
+    resetFaq();
+    setTab(newTab);
+    setInput("");
+    setMessages([
+      {
+        role: "assistant",
+        text: getIntro(newTab),
+        source: "system",
+      },
+    ]);
+  }
+
+  async function sendMessage() {
+    const trimmed = input.trim();
+
+    if (!trimmed || loading) return;
+
+    resetFaq();
+
+    const userMessage = {
+      role: "user",
+      text: trimmed,
+      source: "user",
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: trimmed,
+          tab,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Er ging iets mis.");
+      }
+
+      const botMessage = {
+        role: "assistant",
+        text: data.answer || "Ik kon geen antwoord maken.",
+        source: data.source || "unknown",
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: "Er ging iets mis. Probeer het opnieuw.",
+          source: "error",
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
   return (
-    <main className="container">
-      <section className="card">
-        {/* HEADER */}
-        <div className="header">
-          <div className="logoWrap">
-            <Image src="/bridgecoach-logo.png" alt="Bridgecoach" width={44} height={44} />
-          </div>
-          <div>
-            <h1 className="title">BRIDGECOACH</h1>
-            <p className="subtitle">Kort en duidelijk bridge-advies</p>
+    <main style={styles.page}>
+      <div style={styles.wrapper}>
+        <div style={styles.header}>
+          <div style={styles.brandBlock}>
+            <img src="/logo.png" alt="Bridgecoach logo" style={styles.logo} />
+            <div>
+              <h1 style={styles.title}>BRIDGECOACH</h1>
+              <p style={styles.subtitle}>Kort en duidelijk bridge-advies</p>
+            </div>
           </div>
         </div>
 
-        {/* TABS + AUDIO BUTTON (zelfde lijn, audio helemaal rechts) */}
-        <div className="tabsRow">
-          <div className="tabs">
-            <button
-              className={`tab ${mode === "bieden" ? "active" : ""}`}
-              onClick={() => changeMode("bieden")}
-            >
-              Bieden
-            </button>
-            <button
-              className={`tab ${mode === "spel" ? "active" : ""}`}
-              onClick={() => changeMode("spel")}
-            >
-              Spel
-            </button>
-            <button
-              className={`tab ${mode === "verdediging" ? "active" : ""}`}
-              onClick={() => changeMode("verdediging")}
-            >
-              Verdediging
-            </button>
-          </div>
+        <div style={styles.tabsRow}>
+          <TabButton
+            label="Opening"
+            active={tab === "opening"}
+            onClick={() => switchTab("opening")}
+          />
+          <TabButton
+            label="Bijbod"
+            active={tab === "bijbod"}
+            onClick={() => switchTab("bijbod")}
+          />
+          <TabButton
+            label="Uitkomst"
+            active={tab === "uitkomst"}
+            onClick={() => switchTab("uitkomst")}
+          />
+        </div>
 
-          <button
-            type="button"
-            className={`audioBtn ${playing ? "on" : ""}`}
-            onClick={toggleAudio}
-            aria-label={playing ? "Pauze" : "Luister"}
-            title={playing ? "Pauze" : "Luister"}
-          >
-           {playing ? (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="6" y="4" width="4" height="16"></rect>
-    <rect x="14" y="4" width="4" height="16"></rect>
-  </svg>
-) : (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
-    <path d="M21 18a3 3 0 0 1-3 3h-1v-7h1a3 3 0 0 1 3 3z"></path>
-    <path d="M3 18a3 3 0 0 0 3 3h1v-7H6a3 3 0 0 0-3 3z"></path>
-  </svg>
-)}
+        <div style={styles.topicRow}>
+          <button onClick={playTopicAudio} style={styles.topicAudioBtn}>
+            {isAudioPlaying ? (
+              <PauseIcon size={16} />
+            ) : (
+              <HeadphoneIcon size={16} dark />
+            )}
+            <span>{isAudioPlaying ? "Pauzeer uitleg" : "Luister uitleg"}</span>
           </button>
 
-          {/* Verborgen audio */}
-          <audio ref={audioRef} onEnded={onAudioEnded} preload="none">
-            <source src={AUDIO_BY_MODE[mode]} type="audio/mp4" />
-            Je browser ondersteunt geen audio.
-          </audio>
+          <button onClick={loadFaq} style={styles.faqBtn}>
+            FAQ
+          </button>
         </div>
 
-        {/* CHAT */}
-        <div ref={boxRef} className="chatBox">
-          {messages.map((m, i) => {
-            const isUser = m.role === "user";
-            return (
-              <div key={i} className="row">
-                <div className={`bubble ${isUser ? "bubbleUser" : "bubbleAi"}`}>
-                  <div className="name">{isUser ? "Jij" : "Bridgecoach"}</div>
-                  {renderSuits(m.content)}
+        {faqOptions && (
+          <div style={styles.faqPanel}>
+            {faqPath.length > 0 && (
+              <button onClick={handleFaqBack} style={styles.faqBackBtn}>
+                ← Terug
+              </button>
+            )}
+
+            <div style={styles.faqOptions}>
+              {faqOptions.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleFaqChoice(option)}
+                  style={styles.faqOptionBtn}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div style={styles.chatBox}>
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              style={{
+                ...styles.messageRow,
+                justifyContent:
+                  msg.role === "user" ? "flex-end" : "flex-start",
+              }}
+            >
+              <div
+                style={{
+                  ...styles.bubble,
+                  ...(msg.role === "user"
+                    ? styles.userBubble
+                    : styles.assistantBubble),
+                }}
+              >
+                <div style={styles.label}>
+                  {msg.role === "user" ? "Jij" : "Bridgecoach"}
                 </div>
+
+                <div style={styles.text}>{renderSimpleMarkdown(msg.text)}</div>
               </div>
-            );
-          })}
+            </div>
+          ))}
 
           {loading && (
-            <div className="row">
-              <div className="bubble bubbleAi">
-                <div className="name">Bridgecoach</div>
-                <div className="typingDots" aria-label="Bridgecoach is aan het typen">
-                  <span></span><span></span><span></span>
-                </div>
+            <div style={styles.messageRow}>
+              <div style={{ ...styles.bubble, ...styles.assistantBubble }}>
+                <div style={styles.label}>Bridgecoach</div>
+                <div style={styles.text}>Even denken...</div>
               </div>
             </div>
           )}
+
+          <div ref={chatEndRef} />
         </div>
 
-        {/* INPUT */}
-        <div className="inputBar">
-          <input
-            className="input"
+        <div style={styles.inputRow}>
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="Bijv: Partner opent 1SA, ik heb 8 punten…"
+            onKeyDown={handleKeyDown}
+            placeholder={getPlaceholder(tab)}
+            style={styles.input}
+            rows={1}
           />
-          <button className="button" onClick={sendMessage} disabled={loading}>
-            {loading ? "…" : "SEND"}
+
+          <button onClick={sendMessage} style={styles.sendButton}>
+            Verstuur
           </button>
         </div>
-      </section>
 
-      <footer className="footer">Bridgecoach · beta · kort en duidelijk bridge-advies</footer>
+        <div style={styles.footer}>
+          Bridgecoach · beta · bridgecoach@ziggo.nl · 2026
+        </div>
+      </div>
     </main>
   );
 }
+
+function TabButton({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        ...styles.tab,
+        ...(active ? styles.tabActive : {}),
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function HeadphoneIcon({ size = 22, dark = false }) {
+  const stroke = dark ? "#111827" : "white";
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={stroke}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 12a8 8 0 0 1 16 0" />
+      <rect x="2" y="12" width="4" height="7" rx="2" />
+      <rect x="18" y="12" width="4" height="7" rx="2" />
+    </svg>
+  );
+}
+
+function PauseIcon({ size = 16 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#111827"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <line x1="10" y1="6" x2="10" y2="18" />
+      <line x1="14" y1="6" x2="14" y2="18" />
+    </svg>
+  );
+}
+
+function renderSimpleMarkdown(text) {
+  function renderCards(line) {
+    return line.split(/(♠|♥|♦|♣)/g).map((part, i) => {
+      if (part === "♥" || part === "♦") {
+        return (
+          <span key={i} style={{ color: "#e11d48", fontWeight: "600" }}>
+            {part}
+          </span>
+        );
+      }
+
+      if (part === "♠" || part === "♣") {
+        return (
+          <span key={i} style={{ color: "#111827", fontWeight: "600" }}>
+            {part}
+          </span>
+        );
+      }
+
+      return <span key={i}>{part}</span>;
+    });
+  }
+
+  const lines = text.split("\n");
+
+  return lines.map((line, index) => {
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      return <div key={index} style={{ height: "8px" }} />;
+    }
+
+    if (trimmed.startsWith("## ")) {
+      return (
+        <div key={index} style={styles.h2}>
+          {renderCards(trimmed.replace("## ", ""))}
+        </div>
+      );
+    }
+
+    if (trimmed.startsWith("- ")) {
+      return (
+        <div key={index} style={styles.listItem}>
+          • {renderCards(trimmed.replace("- ", ""))}
+        </div>
+      );
+    }
+
+    return (
+      <div key={index} style={styles.paragraph}>
+        {renderCards(trimmed)}
+      </div>
+    );
+  });
+}
+
+const styles = {
+
+page: {
+  minHeight: "100vh",
+  background: "#f2f2f2",
+  padding: "40px 20px",
+  fontFamily: "Inter, system-ui, Arial, sans-serif",
+},
+
+wrapper: {
+  maxWidth: "580px",
+  margin: "0 auto",
+  background: "#ffffff",
+  borderRadius: "20px",
+  padding: "24px",
+  boxShadow: "0 8px 30px rgba(0,0,0,0.05)",
+},
+
+header: {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  marginBottom: "20px",
+  background: "#ffffff",
+  padding: "16px",
+  borderRadius: "14px",
+ 
+},
+
+brandBlock: {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+},
+
+logo: {
+  width: "40px",
+  height: "40px",
+  objectFit: "contain",
+},
+
+title: {
+  margin: 0,
+  fontSize: "22px",
+  fontWeight: "700",
+  letterSpacing: "0.4px",
+},
+
+subtitle: {
+  margin: "2px 0 0 0",
+  fontSize: "13px",
+  color: "#6b7280",
+},
+
+tabsRow: {
+  display: "flex",
+  gap: "10px",
+  marginBottom: "16px",
+},
+
+tab: {
+  padding: "10px 18px",
+  borderRadius: "999px",
+  border: "1px solid #ddd",
+  background: "#eeeeee",
+  fontSize: "16px",
+  fontWeight: "600",
+  cursor: "pointer",
+},
+
+tabActive: {
+  background: "#f48c00",
+  color: "white",
+  border: "1px solid #f48c00",
+},
+
+topicRow: {
+  display: "flex",
+  gap: "10px",
+  marginBottom: "12px",
+},
+
+topicAudioBtn: {
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  borderRadius: "999px",
+  border: "1px solid #ddd",
+  background: "#ffffff",
+  padding: "8px 14px",
+  fontSize: "14px",
+  cursor: "pointer",
+},
+
+faqBtn: {
+  borderRadius: "999px",
+  border: "1px solid #ddd",
+  background: "#ffffff",
+  padding: "8px 14px",
+  fontSize: "13px",
+  cursor: "pointer",
+},
+
+faqPanel: {
+  marginBottom: "12px",
+},
+
+faqOptions: {
+  display: "flex",
+  gap: "8px",
+  flexWrap: "wrap",
+},
+
+faqOptionBtn: {
+  borderRadius: "999px",
+  border: "1px solid #ddd",
+  background: "#ffffff",
+  padding: "6px 12px",
+  fontSize: "13px",
+  cursor: "pointer",
+},
+
+faqBackBtn: {
+  borderRadius: "999px",
+  border: "1px solid #ddd",
+  background: "#ffffff",
+  padding: "6px 10px",
+  fontSize: "12px",
+  marginBottom: "8px",
+  cursor: "pointer",
+},
+
+chatBox: {
+  minHeight: "360px",
+  maxHeight: "360px",
+  overflowY: "auto",
+  background: "#f7f7f7",
+  border: "1px solid #d8d8d8",
+  borderRadius: "18px",
+  padding: "14px",
+},
+
+messageRow: {
+  display: "flex",
+  marginBottom: "12px",
+},
+
+bubble: {
+  maxWidth: "70%",
+  borderRadius: "14px",
+  padding: "12px 14px",
+},
+
+assistantBubble: {
+  background: "#e9eaec",
+},
+
+userBubble: {
+  background: "#f3e2c8",
+},
+
+label: {
+  fontSize: "11px",
+  color: "#6b7280",
+  marginBottom: "6px",
+},
+
+text: {
+  fontSize: "15px",
+  lineHeight: 1.5,
+},
+
+inputRow: {
+  display: "flex",
+  gap: "10px",
+  marginTop: "14px",
+},
+
+input: {
+  flex: 1,
+  borderRadius: "999px",
+  border: "1px solid #ddd",
+  padding: "12px 16px",
+  fontSize: "14px",
+  background: "#ffffff",
+  resize: "none",
+},
+
+sendButton: {
+  borderRadius: "999px",
+  border: "none",
+  background: "#f48c00",
+  color: "white",
+  fontWeight: "600",
+  padding: "12px 20px",
+  cursor: "pointer",
+},
+
+footer: {
+  textAlign: "center",
+  marginTop: "18px",
+  fontSize: "12px",
+  color: "#9ca3af",
+},
+
+h2: {
+  fontSize: "16px",
+  fontWeight: "700",
+  margin: "6px 0",
+},
+
+paragraph: {
+  margin: "4px 0",
+},
+
+listItem: {
+  margin: "4px 0",
+}
+
+};
