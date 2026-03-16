@@ -115,7 +115,7 @@ function findFaqAnswer(message, faqData) {
 
 function buildKnowledgeContext(markdownFiles, tab) {
   const tabToSlugMap = {
-    bieden: ["opening", "antwoorden"],
+   bieden: ["opening", "antwoorden", "preemptief"],
     spel: [],
     verdediging: ["uitkomst"],
   };
