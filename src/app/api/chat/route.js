@@ -147,7 +147,7 @@ export async function POST(req) {
     const faqData = getFaqData();
     const markdownFiles = getMarkdownFiles();
 
-    // 1. Eerst FAQ checken
+    // 1. Eerst FAQ checken (geen streaming nodig, antwoord is direct)
     const faqMatch = findFaqAnswer(message, faqData);
     if (faqMatch) {
       return Response.json({
@@ -157,7 +157,7 @@ export async function POST(req) {
       });
     }
 
-    // 2. OpenAI met markdown als context
+    // 2. OpenAI met streaming
     const knowledgeContext = buildKnowledgeContext(markdownFiles, tab);
 
     const systemPrompt = `
@@ -167,7 +167,7 @@ Je begeleidt beginners en gemiddelde spelers op een heldere, stapsgewijze manier
 ## Persoonlijkheid en toon
 - Warm, aanmoedigend en geduldig
 - Begin een nieuw onderwerp altijd met een korte motiverende zin zoals "Goed dat je dit wilt leren 👍"
-- Stel na je uitleg een vervolgvraag of quizvraag om te controleren of de speler het begrijpt
+- Stel na je uitleg één korte quizvraag om te controleren of de speler het begrijpt
 - Gebruik "je" en "jij", geen formeel "u"
 
 ## Taalgebruik
@@ -187,13 +187,19 @@ Gebruik altijd deze opbouw:
    ♣️ V 10 4
 4. Aanbevolen bieding met pijl: ➡️ 1♠️
 5. Korte uitleg van de bieding met opsommingstekens
-6. Samenvatting als ✅ blok met kernpunten
-7. Sluit altijd af met een oefenvraag of quizvraag 🃏
+6. Samenvatting als ✅ blok — alleen nieuwe kernpunten, geen herhaling
+7. Sluit af met één quizvraag 🃏
+
+## Vermijd herhaling
+- Noem elk punt maar één keer
+- De ✅ samenvatting bevat geen herhaling van wat al gezegd is
+- Houd het antwoord compact — liever te kort dan te lang
 
 ## Opmaakregels
 - Gebruik emoji voor structuur: ✅ 1️⃣ 2️⃣ 3️⃣ ➡️ ⚠️
 - Horizontale lijnen (---) tussen secties
-- Korte, scanbare zinnen — geen lange alinea's zonder scheiding
+- Gebruik GEEN markdown-koppen zoals ## of ### — gebruik alleen vetgedrukte tekst en emoji
+- Korte, scanbare zinnen
 
 ## Biedconventies
 - Standaard Nederlands clubsysteem
@@ -214,26 +220,46 @@ ${knowledgeContext}
 Vraag van de gebruiker:
 ${message}
 
-Geef een gestructureerd antwoord in de stijl van BridgeCoach.
+Geef een compact, gestructureerd antwoord in de stijl van BridgeCoach. Vermijd herhaling.
 `;
 
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      max_tokens: 1500,
+    // Start streaming response
+    const encoder = new TextEncoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const openaiStream = await client.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            max_tokens: 800,
+            stream: true,
+          });
+
+          for await (const chunk of openaiStream) {
+            const text = chunk.choices?.[0]?.delta?.content || "";
+            if (text) {
+              controller.enqueue(encoder.encode(text));
+            }
+          }
+
+          controller.close();
+        } catch (error) {
+          console.error("Streaming fout:", error);
+          controller.error(error);
+        }
+      },
     });
 
-    const answer =
-      response.choices?.[0]?.message?.content ||
-      "Er ging iets mis. Probeer het opnieuw.";
-
-    return Response.json({
-      answer,
-      audio: getFallbackAudioByTab(tab),
-      source: "openai",
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "X-Audio": getFallbackAudioByTab(tab) || "",
+      },
     });
   } catch (error) {
     console.error("API /api/chat error:", error);

@@ -31,9 +31,7 @@ export default function Home() {
     if (faqTree) return faqTree;
 
     const res = await fetch("/content/faq.json");
-    if (!res.ok) {
-      throw new Error("faq.json kon niet worden geladen.");
-    }
+    if (!res.ok) throw new Error("faq.json kon niet worden geladen.");
 
     const data = await res.json();
     setFaqTree(data);
@@ -48,35 +46,21 @@ export default function Home() {
   }
 
   function getPlaceholder(tabName) {
-    if (tabName === "opening") {
-      return "Bijv: Ik heb 13 punten en 5 harten, wat open ik?";
-    }
-    if (tabName === "bijbod") {
-      return "Bijv: Partner opent 1SA, ik heb 8 punten...";
-    }
-    if (tabName === "uitkomst") {
-      return "Bijv: Wat is een goede uitkomst tegen 3SA?";
-    }
+    if (tabName === "opening") return "Bijv: Ik heb 13 punten en 5 harten, wat open ik?";
+    if (tabName === "bijbod") return "Bijv: Partner opent 1SA, ik heb 8 punten...";
+    if (tabName === "uitkomst") return "Bijv: Wat is een goede uitkomst tegen 3SA?";
     return "Stel je bridgevraag...";
   }
 
   function getIntro(tabName) {
-    if (tabName === "opening") {
-      return "Hoi! Ik ben jouw Bridgecoach. Stel gerust een vraag over openingen.";
-    }
-    if (tabName === "bijbod") {
-      return "Hoi! Ik ben jouw Bridgecoach. Stel gerust een vraag over bijbiedingen.";
-    }
-    if (tabName === "uitkomst") {
-      return "Hoi! Ik ben jouw Bridgecoach. Stel gerust een vraag over uitkomsten.";
-    }
+    if (tabName === "opening") return "Hoi! Ik ben jouw Bridgecoach. Stel gerust een vraag over openingen.";
+    if (tabName === "bijbod") return "Hoi! Ik ben jouw Bridgecoach. Stel gerust een vraag over bijbiedingen.";
+    if (tabName === "uitkomst") return "Hoi! Ik ben jouw Bridgecoach. Stel gerust een vraag over uitkomsten.";
     return "Hoi! Ik ben jouw Bridgecoach. Waar wil je hulp bij?";
   }
 
   function stopAudio() {
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
+    if (audioRef.current) audioRef.current.pause();
     setIsAudioPlaying(false);
   }
 
@@ -95,30 +79,19 @@ export default function Home() {
 
     if (currentAudio.src !== wantedSrc) {
       currentAudio.pause();
-
       const audio = new Audio(file);
       audio.addEventListener("ended", () => setIsAudioPlaying(false));
       audioRef.current = audio;
-
-      audio
-        .play()
+      audio.play()
         .then(() => setIsAudioPlaying(true))
-        .catch((err) => {
-          console.error("Audio kon niet starten:", err);
-          setIsAudioPlaying(false);
-        });
-
+        .catch((err) => { console.error("Audio fout:", err); setIsAudioPlaying(false); });
       return;
     }
 
     if (currentAudio.paused) {
-      currentAudio
-        .play()
+      currentAudio.play()
         .then(() => setIsAudioPlaying(true))
-        .catch((err) => {
-          console.error("Audio kon niet starten:", err);
-          setIsAudioPlaying(false);
-        });
+        .catch((err) => { console.error("Audio fout:", err); setIsAudioPlaying(false); });
     } else {
       currentAudio.pause();
       setIsAudioPlaying(false);
@@ -128,25 +101,15 @@ export default function Home() {
   async function loadFaq() {
     try {
       setLoading(true);
-
       const data = await ensureFaqLoaded();
       const topicFaq = data?.[tab];
 
-      if (!topicFaq || !topicFaq.options) {
-        throw new Error("Geen FAQ gevonden voor dit onderwerp.");
-      }
+      if (!topicFaq || !topicFaq.options) throw new Error("Geen FAQ gevonden.");
 
       setFaqOptions(topicFaq.options);
       setFaqPath([]);
     } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: "Er ging iets mis bij het laden van de FAQ.",
-          source: "error",
-        },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", text: "Er ging iets mis bij het laden van de FAQ.", source: "error" }]);
     } finally {
       setLoading(false);
     }
@@ -154,15 +117,11 @@ export default function Home() {
 
   function findNodeByPath(rootOptions, path) {
     let currentOptions = rootOptions;
-
     for (const step of path) {
       const found = currentOptions.find((item) => item.label === step);
-      if (!found || !found.children) {
-        return currentOptions;
-      }
+      if (!found || !found.children) return currentOptions;
       currentOptions = found.children;
     }
-
     return currentOptions;
   }
 
@@ -170,7 +129,6 @@ export default function Home() {
     try {
       const data = await ensureFaqLoaded();
       const topicFaq = data?.[tab];
-
       if (!topicFaq || !topicFaq.options) return;
 
       if (option.children) {
@@ -180,27 +138,12 @@ export default function Home() {
       }
 
       if (option.answer) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            text: option.answer,
-            source: "faq",
-          },
-        ]);
-
+        setMessages((prev) => [...prev, { role: "assistant", text: option.answer, source: "faq" }]);
         setFaqOptions(null);
         setFaqPath([]);
       }
     } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: "Er ging iets mis bij de FAQ.",
-          source: "error",
-        },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", text: "Er ging iets mis bij de FAQ.", source: "error" }]);
     }
   }
 
@@ -208,7 +151,6 @@ export default function Home() {
     try {
       const data = await ensureFaqLoaded();
       const topicFaq = data?.[tab];
-
       if (!topicFaq || !topicFaq.options) return;
 
       if (faqPath.length === 0) {
@@ -217,19 +159,10 @@ export default function Home() {
       }
 
       const newPath = faqPath.slice(0, -1);
-      const newOptions = findNodeByPath(topicFaq.options, newPath);
-
       setFaqPath(newPath);
-      setFaqOptions(newOptions);
+      setFaqOptions(findNodeByPath(topicFaq.options, newPath));
     } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: "Er ging iets mis bij teruggaan in de FAQ.",
-          source: "error",
-        },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", text: "Er ging iets mis bij teruggaan.", source: "error" }]);
     }
   }
 
@@ -243,66 +176,94 @@ export default function Home() {
     resetFaq();
     setTab(newTab);
     setInput("");
-    setMessages([
-      {
-        role: "assistant",
-        text: getIntro(newTab),
-        source: "system",
-      },
-    ]);
+    setMessages([{ role: "assistant", text: getIntro(newTab), source: "system" }]);
   }
 
   async function sendMessage() {
     const trimmed = input.trim();
-
     if (!trimmed || loading) return;
 
     resetFaq();
-
-    const userMessage = {
-      role: "user",
-      text: trimmed,
-      source: "user",
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => [...prev, { role: "user", text: trimmed, source: "user" }]);
     setInput("");
     setLoading(true);
+
+    // Voeg direct een leeg assistant-bericht toe dat we gaan vullen via streaming
+    setMessages((prev) => [...prev, { role: "assistant", text: "", source: "openai", streaming: true }]);
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: trimmed,
-          tab,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmed, tab }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
+        const data = await res.json();
         throw new Error(data?.error || "Er ging iets mis.");
       }
 
-      const botMessage = {
-        role: "assistant",
-        text: data.answer || "Ik kon geen antwoord maken.",
-        source: data.source || "unknown",
-      };
+      // Controleer of het een stream is of een gewone JSON (FAQ)
+      const contentType = res.headers.get("Content-Type") || "";
 
-      setMessages((prev) => [...prev, botMessage]);
+      if (contentType.includes("application/json")) {
+        // FAQ antwoord — geen streaming
+        const data = await res.json();
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: "assistant",
+            text: data.answer || "Ik kon geen antwoord maken.",
+            source: data.source || "faq",
+            streaming: false,
+          };
+          return updated;
+        });
+      } else {
+        // Streaming antwoord — lees chunk voor chunk
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          fullText += decoder.decode(value, { stream: true });
+
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              role: "assistant",
+              text: fullText,
+              source: "openai",
+              streaming: true,
+            };
+            return updated;
+          });
+        }
+
+        // Markeer streaming als klaar
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            ...updated[updated.length - 1],
+            streaming: false,
+          };
+          return updated;
+        });
+      }
     } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
           role: "assistant",
           text: "Er ging iets mis. Probeer het opnieuw.",
           source: "error",
-        },
-      ]);
+          streaming: false,
+        };
+        return updated;
+      });
     } finally {
       setLoading(false);
     }
@@ -329,53 +290,27 @@ export default function Home() {
         </div>
 
         <div style={styles.tabsRow}>
-          <TabButton
-            label="Opening"
-            active={tab === "opening"}
-            onClick={() => switchTab("opening")}
-          />
-          <TabButton
-            label="Bijbod"
-            active={tab === "bijbod"}
-            onClick={() => switchTab("bijbod")}
-          />
-          <TabButton
-            label="Uitkomst"
-            active={tab === "uitkomst"}
-            onClick={() => switchTab("uitkomst")}
-          />
+          <TabButton label="Opening" active={tab === "opening"} onClick={() => switchTab("opening")} />
+          <TabButton label="Bijbod" active={tab === "bijbod"} onClick={() => switchTab("bijbod")} />
+          <TabButton label="Uitkomst" active={tab === "uitkomst"} onClick={() => switchTab("uitkomst")} />
         </div>
 
         <div style={styles.topicRow}>
           <button onClick={playTopicAudio} style={styles.topicAudioBtn}>
-            {isAudioPlaying ? (
-              <PauseIcon size={16} />
-            ) : (
-              <HeadphoneIcon size={16} dark />
-            )}
+            {isAudioPlaying ? <PauseIcon size={16} /> : <HeadphoneIcon size={16} dark />}
             <span>{isAudioPlaying ? "Pauzeer uitleg" : "Luister uitleg"}</span>
           </button>
-
-          <button onClick={loadFaq} style={styles.faqBtn}>
-            FAQ
-          </button>
+          <button onClick={loadFaq} style={styles.faqBtn}>FAQ</button>
         </div>
 
         {faqOptions && (
           <div style={styles.faqPanel}>
             {faqPath.length > 0 && (
-              <button onClick={handleFaqBack} style={styles.faqBackBtn}>
-                ← Terug
-              </button>
+              <button onClick={handleFaqBack} style={styles.faqBackBtn}>← Terug</button>
             )}
-
             <div style={styles.faqOptions}>
               {faqOptions.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleFaqChoice(option)}
-                  style={styles.faqOptionBtn}
-                >
+                <button key={index} onClick={() => handleFaqChoice(option)} style={styles.faqOptionBtn}>
                   {option.label}
                 </button>
               ))}
@@ -387,37 +322,22 @@ export default function Home() {
           {messages.map((msg, index) => (
             <div
               key={index}
-              style={{
-                ...styles.messageRow,
-                justifyContent:
-                  msg.role === "user" ? "flex-end" : "flex-start",
-              }}
+              style={{ ...styles.messageRow, justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}
             >
-              <div
-                style={{
-                  ...styles.bubble,
-                  ...(msg.role === "user"
-                    ? styles.userBubble
-                    : styles.assistantBubble),
-                }}
-              >
-                <div style={styles.label}>
-                  {msg.role === "user" ? "Jij" : "Bridgecoach"}
+              <div style={{ ...styles.bubble, ...(msg.role === "user" ? styles.userBubble : styles.assistantBubble) }}>
+                <div style={styles.label}>{msg.role === "user" ? "Jij" : "Bridgecoach"}</div>
+                <div style={styles.text}>
+                  {msg.streaming && msg.text === ""
+                    ? <span style={styles.cursor}>Even denken...</span>
+                    : renderMarkdown(msg.text)
+                  }
+                  {msg.streaming && msg.text !== "" && (
+                    <span style={styles.cursor}>▋</span>
+                  )}
                 </div>
-
-                <div style={styles.text}>{renderMarkdown(msg.text)}</div>
               </div>
             </div>
           ))}
-
-          {loading && (
-            <div style={styles.messageRow}>
-              <div style={{ ...styles.bubble, ...styles.assistantBubble }}>
-                <div style={styles.label}>Bridgecoach</div>
-                <div style={styles.text}>Even denken...</div>
-              </div>
-            </div>
-          )}
 
           <div ref={chatEndRef} />
         </div>
@@ -431,8 +351,7 @@ export default function Home() {
             style={styles.input}
             rows={1}
           />
-
-          <button onClick={sendMessage} style={styles.sendButton}>
+          <button onClick={sendMessage} style={styles.sendButton} disabled={loading}>
             Verstuur
           </button>
         </div>
@@ -447,40 +366,19 @@ export default function Home() {
 
 // ─── Markdown renderer ────────────────────────────────────────────────────────
 
-// Kleurt kaartsymbolen rood of zwart
 function renderInline(text) {
-  // Verwerk **bold** en kaartkleuren
   const parts = text.split(/(\*\*.*?\*\*|[♠♥♦♣])/g);
 
   return parts.map((part, i) => {
-    // **bold**
     if (part.startsWith("**") && part.endsWith("**")) {
-      const inner = part.slice(2, -2);
-      return (
-        <strong key={i} style={{ fontWeight: "700" }}>
-          {renderInline(inner)}
-        </strong>
-      );
+      return <strong key={i} style={{ fontWeight: "700" }}>{renderInline(part.slice(2, -2))}</strong>;
     }
-
-    // Rode kaartsymbolen
     if (part === "♥" || part === "♦") {
-      return (
-        <span key={i} style={{ color: "#e11d48", fontWeight: "600" }}>
-          {part}
-        </span>
-      );
+      return <span key={i} style={{ color: "#e11d48", fontWeight: "600" }}>{part}</span>;
     }
-
-    // Zwarte kaartsymbolen
     if (part === "♠" || part === "♣") {
-      return (
-        <span key={i} style={{ color: "#111827", fontWeight: "600" }}>
-          {part}
-        </span>
-      );
+      return <span key={i} style={{ color: "#111827", fontWeight: "600" }}>{part}</span>;
     }
-
     return <span key={i}>{part}</span>;
   });
 }
@@ -491,58 +389,29 @@ function renderMarkdown(text) {
   return lines.map((line, index) => {
     const trimmed = line.trim();
 
-    // Lege regel
-    if (!trimmed) {
-      return <div key={index} style={{ height: "8px" }} />;
-    }
+    if (!trimmed) return <div key={index} style={{ height: "8px" }} />;
 
-    // Horizontale lijn ---
     if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
       return <hr key={index} style={styles.hr} />;
     }
 
-    // ### Kop (h3)
     if (trimmed.startsWith("### ")) {
-      return (
-        <div key={index} style={styles.h3}>
-          {renderInline(trimmed.slice(4))}
-        </div>
-      );
+      return <div key={index} style={styles.h3}>{renderInline(trimmed.slice(4))}</div>;
     }
 
-    // ## Kop (h2)
     if (trimmed.startsWith("## ")) {
-      return (
-        <div key={index} style={styles.h2}>
-          {renderInline(trimmed.slice(3))}
-        </div>
-      );
+      return <div key={index} style={styles.h2}>{renderInline(trimmed.slice(3))}</div>;
     }
 
-    // # Kop (h1)
     if (trimmed.startsWith("# ")) {
-      return (
-        <div key={index} style={styles.h1}>
-          {renderInline(trimmed.slice(2))}
-        </div>
-      );
+      return <div key={index} style={styles.h1}>{renderInline(trimmed.slice(2))}</div>;
     }
 
-    // Lijstitem met - of •
     if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
-      return (
-        <div key={index} style={styles.listItem}>
-          • {renderInline(trimmed.slice(2))}
-        </div>
-      );
+      return <div key={index} style={styles.listItem}>• {renderInline(trimmed.slice(2))}</div>;
     }
 
-    // Gewone alinea
-    return (
-      <div key={index} style={styles.paragraph}>
-        {renderInline(trimmed)}
-      </div>
-    );
+    return <div key={index} style={styles.paragraph}>{renderInline(trimmed)}</div>;
   });
 }
 
@@ -550,13 +419,7 @@ function renderMarkdown(text) {
 
 function TabButton({ label, active, onClick }) {
   return (
-    <button
-      onClick={onClick}
-      style={{
-        ...styles.tab,
-        ...(active ? styles.tabActive : {}),
-      }}
-    >
+    <button onClick={onClick} style={{ ...styles.tab, ...(active ? styles.tabActive : {}) }}>
       {label}
     </button>
   );
@@ -564,19 +427,8 @@ function TabButton({ label, active, onClick }) {
 
 function HeadphoneIcon({ size = 22, dark = false }) {
   const stroke = dark ? "#111827" : "white";
-
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={stroke}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M4 12a8 8 0 0 1 16 0" />
       <rect x="2" y="12" width="4" height="7" rx="2" />
       <rect x="18" y="12" width="4" height="7" rx="2" />
@@ -586,17 +438,7 @@ function HeadphoneIcon({ size = 22, dark = false }) {
 
 function PauseIcon({ size = 16 }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#111827"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <line x1="10" y1="6" x2="10" y2="18" />
       <line x1="14" y1="6" x2="14" y2="18" />
     </svg>
@@ -776,6 +618,13 @@ text: {
   lineHeight: 1.5,
 },
 
+cursor: {
+  display: "inline-block",
+  color: "#f48c00",
+  fontWeight: "bold",
+  animation: "blink 1s step-start infinite",
+},
+
 inputRow: {
   display: "flex",
   gap: "10px",
@@ -809,39 +658,11 @@ footer: {
   color: "#9ca3af",
 },
 
-// Markdown stijlen
-h1: {
-  fontSize: "18px",
-  fontWeight: "700",
-  margin: "10px 0 4px 0",
-},
-
-h2: {
-  fontSize: "16px",
-  fontWeight: "700",
-  margin: "8px 0 4px 0",
-},
-
-h3: {
-  fontSize: "15px",
-  fontWeight: "700",
-  margin: "6px 0 2px 0",
-  color: "#374151",
-},
-
-paragraph: {
-  margin: "4px 0",
-},
-
-listItem: {
-  margin: "3px 0",
-  paddingLeft: "4px",
-},
-
-hr: {
-  border: "none",
-  borderTop: "1px solid #d1d5db",
-  margin: "8px 0",
-},
+h1: { fontSize: "18px", fontWeight: "700", margin: "10px 0 4px 0" },
+h2: { fontSize: "16px", fontWeight: "700", margin: "8px 0 4px 0" },
+h3: { fontSize: "15px", fontWeight: "700", margin: "6px 0 2px 0", color: "#374151" },
+paragraph: { margin: "4px 0" },
+listItem: { margin: "3px 0", paddingLeft: "4px" },
+hr: { border: "none", borderTop: "1px solid #d1d5db", margin: "8px 0" },
 
 };
