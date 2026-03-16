@@ -90,6 +90,26 @@ function findFaqAnswer(message, faqData) {
     if (question.includes(normalizedKey)) {
       const item = faqData[key];
 
+      // Sla over als het een tabblad-categorie is (geen direct antwoord)
+      if (!item || typeof item !== "string" && !item.answer) continue;
+
+      if (typeof item === "string") {
+        return { answer: item, audio: null, source: "faq" };
+      }
+
+      return {
+        answer: item.answer || "",
+        audio: item.audio || null,
+        source: "faq",
+      };
+    }
+  }
+
+  return null;
+}
+    if (question.includes(normalizedKey)) {
+      const item = faqData[key];
+
       if (typeof item === "string") {
         return { answer: item, audio: null, source: "faq" };
       }
