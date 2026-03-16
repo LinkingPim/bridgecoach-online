@@ -16,9 +16,7 @@ export default function Home() {
     },
   ]);
 
-  // Gespreksgeschiedenis voor OpenAI (alleen user/assistant, geen systeem)
   const [history, setHistory] = useState([]);
-
   const [faqTree, setFaqTree] = useState(null);
   const [faqOptions, setFaqOptions] = useState(null);
   const [faqPath, setFaqPath] = useState([]);
@@ -175,7 +173,7 @@ export default function Home() {
     resetFaq();
     setTab(newTab);
     setInput("");
-    setHistory([]); // reset geschiedenis bij tabwissel
+    setHistory([]);
     setMessages([{ role: "assistant", text: getIntro(newTab), source: "system" }]);
   }
 
@@ -188,18 +186,13 @@ export default function Home() {
     setInput("");
     setLoading(true);
 
-    // Voeg direct een leeg assistant-bericht toe voor streaming
     setMessages((prev) => [...prev, { role: "assistant", text: "", source: "openai", streaming: true }]);
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: trimmed,
-          tab,
-          history, // stuur gespreksgeschiedenis mee
-        }),
+        body: JSON.stringify({ message: trimmed, tab, history }),
       });
 
       if (!res.ok) {
@@ -210,7 +203,6 @@ export default function Home() {
       const contentType = res.headers.get("Content-Type") || "";
 
       if (contentType.includes("application/json")) {
-        // FAQ antwoord
         const data = await res.json();
         const answerText = data.answer || "Ik kon geen antwoord maken.";
 
@@ -225,14 +217,12 @@ export default function Home() {
           return updated;
         });
 
-        // Voeg toe aan geschiedenis
         setHistory((prev) => [
           ...prev,
           { role: "user", content: trimmed },
           { role: "assistant", content: answerText },
         ]);
       } else {
-        // Streaming antwoord
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let fullText = "";
@@ -255,7 +245,6 @@ export default function Home() {
           });
         }
 
-        // Streaming klaar
         setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = {
@@ -265,7 +254,6 @@ export default function Home() {
           return updated;
         });
 
-        // Voeg toe aan geschiedenis
         setHistory((prev) => [
           ...prev,
           { role: "user", content: trimmed },
@@ -402,36 +390,111 @@ function renderInline(text) {
   });
 }
 
+function isTableRow(line) {
+  return line.trim().startsWith("|") && line.trim().endsWith("|");
+}
+
+function isSeparatorRow(line) {
+  return /^\|[\s\-|]+\|$/.test(line.trim());
+}
+
+function parseTableRows(lines, startIndex) {
+  const rows = [];
+  let i = startIndex;
+  while (i < lines.length && isTableRow(lines[i])) {
+    if (!isSeparatorRow(lines[i])) {
+      const cells = lines[i].trim().slice(1, -1).split("|").map((c) => c.trim());
+      rows.push(cells);
+    }
+    i++;
+  }
+  return { rows, endIndex: i };
+}
+
 function renderMarkdown(text) {
   const lines = text.split("\n");
+  const result = [];
+  let i = 0;
 
-  return lines.map((line, index) => {
+  while (i < lines.length) {
+    const line = lines[i];
     const trimmed = line.trim();
 
-    if (!trimmed) return <div key={index} style={{ height: "8px" }} />;
-
-    if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
-      return <hr key={index} style={styles.hr} />;
+    // Lege regel
+    if (!trimmed) {
+      result.push(<div key={i} style={{ height: "8px" }} />);
+      i++;
+      continue;
     }
 
+    // Horizontale lijn
+    if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
+      result.push(<hr key={i} style={styles.hr} />);
+      i++;
+      continue;
+    }
+
+    // Markdown tabel
+    if (isTableRow(trimmed)) {
+      const { rows, endIndex } = parseTableRows(lines, i);
+      result.push(
+        <div key={i} style={styles.tableWrapper}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                {rows[0]?.map((cell, ci) => (
+                  <th key={ci} style={styles.th}>{renderInline(cell)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.slice(1).map((row, ri) => (
+                <tr key={ri}>
+                  {row.map((cell, ci) => (
+                    <td key={ci} style={styles.td}>{renderInline(cell)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+      i = endIndex;
+      continue;
+    }
+
+    // Koppen
     if (trimmed.startsWith("### ")) {
-      return <div key={index} style={styles.h3}>{renderInline(trimmed.slice(4))}</div>;
+      result.push(<div key={i} style={styles.h3}>{renderInline(trimmed.slice(4))}</div>);
+      i++;
+      continue;
     }
 
     if (trimmed.startsWith("## ")) {
-      return <div key={index} style={styles.h2}>{renderInline(trimmed.slice(3))}</div>;
+      result.push(<div key={i} style={styles.h2}>{renderInline(trimmed.slice(3))}</div>);
+      i++;
+      continue;
     }
 
     if (trimmed.startsWith("# ")) {
-      return <div key={index} style={styles.h1}>{renderInline(trimmed.slice(2))}</div>;
+      result.push(<div key={i} style={styles.h1}>{renderInline(trimmed.slice(2))}</div>);
+      i++;
+      continue;
     }
 
+    // Lijstitem
     if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
-      return <div key={index} style={styles.listItem}>• {renderInline(trimmed.slice(2))}</div>;
+      result.push(<div key={i} style={styles.listItem}>• {renderInline(trimmed.slice(2))}</div>);
+      i++;
+      continue;
     }
 
-    return <div key={index} style={styles.paragraph}>{renderInline(trimmed)}</div>;
-  });
+    // Gewone alinea
+    result.push(<div key={i} style={styles.paragraph}>{renderInline(trimmed)}</div>);
+    i++;
+  }
+
+  return result;
 }
 
 // ─── Subcomponenten ───────────────────────────────────────────────────────────
@@ -682,5 +745,29 @@ h3: { fontSize: "15px", fontWeight: "700", margin: "6px 0 2px 0", color: "#37415
 paragraph: { margin: "4px 0" },
 listItem: { margin: "3px 0", paddingLeft: "4px" },
 hr: { border: "none", borderTop: "1px solid #d1d5db", margin: "8px 0" },
+
+tableWrapper: {
+  overflowX: "auto",
+  margin: "8px 0",
+},
+
+table: {
+  borderCollapse: "collapse",
+  fontSize: "13px",
+  width: "100%",
+},
+
+th: {
+  background: "#e5e7eb",
+  padding: "6px 10px",
+  textAlign: "left",
+  fontWeight: "600",
+  border: "1px solid #d1d5db",
+},
+
+td: {
+  padding: "5px 10px",
+  border: "1px solid #d1d5db",
+},
 
 };

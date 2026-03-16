@@ -84,7 +84,6 @@ function getFallbackAudioByTab(tab) {
 function findFaqAnswer(message, faqData) {
   const question = normalizeText(message);
 
-  // Sla hoofdcategorieën altijd over — dit zijn tabbladen, geen antwoorden
   const tabKeys = ["opening", "bijbod", "uitkomst"];
 
   for (const key of Object.keys(faqData)) {
@@ -95,7 +94,6 @@ function findFaqAnswer(message, faqData) {
     if (question.includes(normalizedKey)) {
       const item = faqData[key];
 
-      // Sla over als er geen direct antwoord is
       if (!item || (typeof item !== "string" && !item.answer)) continue;
 
       if (typeof item === "string") {
@@ -180,6 +178,12 @@ ${isFirstQuestion ? '- Begin je antwoord met een korte motiverende zin zoals "Go
 - Stel na je uitleg één korte quizvraag om te controleren of de speler het begrijpt
 - Gebruik "je" en "jij", geen formeel "u"
 
+## Eerlijkheid over kennis
+- Gebruik ALLEEN de meegeleverde bridgekennis als bron
+- Als een onderwerp NIET in de kennisbron staat, zeg dan eerlijk: "Dit onderwerp heb ik nog niet in mijn kennisbank. Vraag dit aan je bridgedocent of kijk in je lesboek."
+- Verzin NOOIT informatie die niet in de kennisbron staat
+- Spreek jezelf nooit tegen — als je iets niet zeker weet, zeg dat dan
+
 ## Doorvragen
 - Doe NOOIT aannames over de hand van de gebruiker
 - Als je niet genoeg informatie hebt om goed advies te geven, stel dan eerst één gerichte vraag
@@ -217,7 +221,12 @@ Gebruik altijd deze opbouw:
 - Horizontale lijnen (---) tussen secties
 - Gebruik GEEN markdown-koppen zoals ## of ###
 - Gebruik GEEN vetgedrukte tekst (**bold**) in opsommingstekens — alleen bij de aanbevolen bieding
+- Gebruik GEEN markdown-tabellen zoals | West | Noord | — schrijf biedverlopen als gewone tekst
 - Korte, scanbare zinnen
+
+## Biedverloop als tekst
+Schrijf een biedverloop altijd zo:
+West pas — Noord 2❤️ — Oost pas — Zuid ?
 
 ## Tabbladen
 De app heeft drie tabbladen: Opening, Bijbod en Uitkomst.
