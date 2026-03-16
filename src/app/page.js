@@ -284,90 +284,296 @@ export default function Home() {
   }
 
   return (
-    <main style={styles.page}>
-      <div style={styles.wrapper}>
-        <div style={styles.header}>
-          <div style={styles.brandBlock}>
-            <img src="/logo.png" alt="Bridgecoach logo" style={styles.logo} />
+    <>
+      {/* Responsive styles via <style> tag */}
+      <style>{`
+        * { box-sizing: border-box; }
+        .bc-page {
+          min-height: 100vh;
+          background: #f2f2f2;
+          padding: 20px 12px;
+          font-family: Inter, system-ui, Arial, sans-serif;
+        }
+        .bc-wrapper {
+          max-width: 580px;
+          margin: 0 auto;
+          background: #ffffff;
+          border-radius: 20px;
+          padding: 20px 16px;
+          box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+        }
+        .bc-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+        .bc-logo {
+          width: 36px;
+          height: 36px;
+          object-fit: contain;
+          flex-shrink: 0;
+        }
+        .bc-title {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 700;
+          letter-spacing: 0.4px;
+        }
+        .bc-subtitle {
+          margin: 2px 0 0 0;
+          font-size: 12px;
+          color: #6b7280;
+        }
+        .bc-tabs {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 12px;
+          flex-wrap: wrap;
+        }
+        .bc-tab {
+          flex: 1;
+          min-width: 80px;
+          padding: 10px 8px;
+          border-radius: 999px;
+          border: 1px solid #ddd;
+          background: #eeeeee;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          text-align: center;
+          white-space: nowrap;
+        }
+        .bc-tab-active {
+          background: #f48c00;
+          color: white;
+          border-color: #f48c00;
+        }
+        .bc-topicrow {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 12px;
+          flex-wrap: wrap;
+        }
+        .bc-audiobtn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          border-radius: 999px;
+          border: 1px solid #ddd;
+          background: #ffffff;
+          padding: 8px 14px;
+          font-size: 14px;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+        .bc-faqbtn {
+          border-radius: 999px;
+          border: 1px solid #ddd;
+          background: #ffffff;
+          padding: 8px 14px;
+          font-size: 14px;
+          cursor: pointer;
+        }
+        .bc-faqpanel {
+          margin-bottom: 12px;
+        }
+        .bc-faqoptions {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .bc-faqoptionbtn {
+          border-radius: 999px;
+          border: 1px solid #ddd;
+          background: #ffffff;
+          padding: 6px 12px;
+          font-size: 13px;
+          cursor: pointer;
+        }
+        .bc-faqbackbtn {
+          border-radius: 999px;
+          border: 1px solid #ddd;
+          background: #ffffff;
+          padding: 6px 10px;
+          font-size: 12px;
+          margin-bottom: 8px;
+          cursor: pointer;
+        }
+        .bc-chatbox {
+          min-height: 300px;
+          max-height: 400px;
+          overflow-y: auto;
+          background: #f7f7f7;
+          border: 1px solid #d8d8d8;
+          border-radius: 18px;
+          padding: 12px;
+        }
+        .bc-messagerow {
+          display: flex;
+          margin-bottom: 12px;
+        }
+        .bc-bubble {
+          max-width: 80%;
+          border-radius: 14px;
+          padding: 10px 12px;
+        }
+        .bc-assistant {
+          background: #e9eaec;
+        }
+        .bc-user {
+          background: #f3e2c8;
+        }
+        .bc-label {
+          font-size: 11px;
+          color: #6b7280;
+          margin-bottom: 5px;
+        }
+        .bc-text {
+          font-size: 15px;
+          line-height: 1.5;
+        }
+        .bc-cursor {
+          display: inline-block;
+          color: #f48c00;
+          font-weight: bold;
+        }
+        .bc-inputrow {
+          display: flex;
+          gap: 8px;
+          margin-top: 12px;
+          align-items: flex-end;
+        }
+        .bc-input {
+          flex: 1;
+          border-radius: 20px;
+          border: 1px solid #ddd;
+          padding: 10px 14px;
+          font-size: 14px;
+          background: #ffffff;
+          resize: none;
+          font-family: inherit;
+          min-width: 0;
+        }
+        .bc-sendbtn {
+          border-radius: 999px;
+          border: none;
+          background: #f48c00;
+          color: white;
+          font-weight: 600;
+          padding: 10px 16px;
+          cursor: pointer;
+          white-space: nowrap;
+          font-size: 14px;
+          flex-shrink: 0;
+        }
+        .bc-footer {
+          text-align: center;
+          margin-top: 16px;
+          font-size: 11px;
+          color: #9ca3af;
+        }
+        @media (max-width: 400px) {
+          .bc-title { font-size: 17px; }
+          .bc-tab { font-size: 14px; padding: 9px 6px; }
+          .bc-text { font-size: 14px; }
+          .bc-bubble { max-width: 90%; }
+        }
+      `}</style>
+
+      <main className="bc-page">
+        <div className="bc-wrapper">
+
+          <div className="bc-header">
+            <img src="/logo.png" alt="Bridgecoach logo" className="bc-logo" />
             <div>
-              <h1 style={styles.title}>BRIDGECOACH</h1>
-              <p style={styles.subtitle}>Kort en duidelijk bridge-advies</p>
+              <h1 className="bc-title">BRIDGECOACH</h1>
+              <p className="bc-subtitle">Kort en duidelijk bridge-advies</p>
             </div>
           </div>
-        </div>
 
-        <div style={styles.tabsRow}>
-          <TabButton label="Opening" active={tab === "opening"} onClick={() => switchTab("opening")} />
-          <TabButton label="Bijbod" active={tab === "bijbod"} onClick={() => switchTab("bijbod")} />
-          <TabButton label="Uitkomst" active={tab === "uitkomst"} onClick={() => switchTab("uitkomst")} />
-        </div>
-
-        <div style={styles.topicRow}>
-          <button onClick={playTopicAudio} style={styles.topicAudioBtn}>
-            {isAudioPlaying ? <PauseIcon size={16} /> : <HeadphoneIcon size={16} dark />}
-            <span>{isAudioPlaying ? "Pauzeer uitleg" : "Luister uitleg"}</span>
-          </button>
-          <button onClick={loadFaq} style={styles.faqBtn}>FAQ</button>
-        </div>
-
-        {faqOptions && (
-          <div style={styles.faqPanel}>
-            {faqPath.length > 0 && (
-              <button onClick={handleFaqBack} style={styles.faqBackBtn}>← Terug</button>
-            )}
-            <div style={styles.faqOptions}>
-              {faqOptions.map((option, index) => (
-                <button key={index} onClick={() => handleFaqChoice(option)} style={styles.faqOptionBtn}>
-                  {option.label}
-                </button>
-              ))}
-            </div>
+          <div className="bc-tabs">
+            <button
+              className={`bc-tab${tab === "opening" ? " bc-tab-active" : ""}`}
+              onClick={() => switchTab("opening")}
+            >Opening</button>
+            <button
+              className={`bc-tab${tab === "bijbod" ? " bc-tab-active" : ""}`}
+              onClick={() => switchTab("bijbod")}
+            >Bijbod</button>
+            <button
+              className={`bc-tab${tab === "uitkomst" ? " bc-tab-active" : ""}`}
+              onClick={() => switchTab("uitkomst")}
+            >Uitkomst</button>
           </div>
-        )}
 
-        <div style={styles.chatBox}>
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              style={{ ...styles.messageRow, justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}
-            >
-              <div style={{ ...styles.bubble, ...(msg.role === "user" ? styles.userBubble : styles.assistantBubble) }}>
-                <div style={styles.label}>{msg.role === "user" ? "Jij" : "Bridgecoach"}</div>
-                <div style={styles.text}>
-                  {msg.streaming && msg.text === ""
-                    ? <span style={styles.cursor}>Even denken...</span>
-                    : renderMarkdown(msg.text)
-                  }
-                  {msg.streaming && msg.text !== "" && (
-                    <span style={styles.cursor}>▋</span>
-                  )}
-                </div>
+          <div className="bc-topicrow">
+            <button onClick={playTopicAudio} className="bc-audiobtn">
+              {isAudioPlaying ? <PauseIcon size={16} /> : <HeadphoneIcon size={16} />}
+              <span>{isAudioPlaying ? "Pauzeer" : "Luister uitleg"}</span>
+            </button>
+            <button onClick={loadFaq} className="bc-faqbtn">FAQ</button>
+          </div>
+
+          {faqOptions && (
+            <div className="bc-faqpanel">
+              {faqPath.length > 0 && (
+                <button onClick={handleFaqBack} className="bc-faqbackbtn">← Terug</button>
+              )}
+              <div className="bc-faqoptions">
+                {faqOptions.map((option, index) => (
+                  <button key={index} onClick={() => handleFaqChoice(option)} className="bc-faqoptionbtn">
+                    {option.label}
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
+          )}
 
-          <div ref={chatEndRef} />
-        </div>
+          <div className="bc-chatbox">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className="bc-messagerow"
+                style={{ justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}
+              >
+                <div className={`bc-bubble ${msg.role === "user" ? "bc-user" : "bc-assistant"}`}>
+                  <div className="bc-label">{msg.role === "user" ? "Jij" : "Bridgecoach"}</div>
+                  <div className="bc-text">
+                    {msg.streaming && msg.text === ""
+                      ? <span className="bc-cursor">Even denken...</span>
+                      : renderMarkdown(msg.text)
+                    }
+                    {msg.streaming && msg.text !== "" && (
+                      <span className="bc-cursor">▋</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
 
-        <div style={styles.inputRow}>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={getPlaceholder(tab)}
-            style={styles.input}
-            rows={1}
-          />
-          <button onClick={sendMessage} style={styles.sendButton} disabled={loading}>
-            Verstuur
-          </button>
-        </div>
+          <div className="bc-inputrow">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={getPlaceholder(tab)}
+              className="bc-input"
+              rows={1}
+            />
+            <button onClick={sendMessage} className="bc-sendbtn" disabled={loading}>
+              Verstuur
+            </button>
+          </div>
 
-        <div style={styles.footer}>
-          Bridgecoach · beta · bridgecoach@ziggo.nl · 2026
+          <div className="bc-footer">
+            Bridgecoach · beta · bridgecoach@ziggo.nl · 2026
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }
 
@@ -375,7 +581,6 @@ export default function Home() {
 
 function renderInline(text) {
   const parts = text.split(/(\*\*.*?\*\*|[♠♥♦♣])/g);
-
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={i} style={{ fontWeight: "700" }}>{renderInline(part.slice(2, -2))}</strong>;
@@ -420,77 +625,60 @@ function renderMarkdown(text) {
     const line = lines[i];
     const trimmed = line.trim();
 
-    // Lege regel
     if (!trimmed) {
       result.push(<div key={i} style={{ height: "8px" }} />);
-      i++;
-      continue;
+      i++; continue;
     }
 
-    // Horizontale lijn
     if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
-      result.push(<hr key={i} style={styles.hr} />);
-      i++;
-      continue;
+      result.push(<hr key={i} style={{ border: "none", borderTop: "1px solid #d1d5db", margin: "8px 0" }} />);
+      i++; continue;
     }
 
-    // Markdown tabel
     if (isTableRow(trimmed)) {
       const { rows, endIndex } = parseTableRows(lines, i);
       result.push(
-        <div key={i} style={styles.tableWrapper}>
-          <table style={styles.table}>
+        <div key={i} style={{ overflowX: "auto", margin: "8px 0" }}>
+          <table style={{ borderCollapse: "collapse", fontSize: "13px", width: "100%" }}>
             <thead>
-              <tr>
-                {rows[0]?.map((cell, ci) => (
-                  <th key={ci} style={styles.th}>{renderInline(cell)}</th>
-                ))}
-              </tr>
+              <tr>{rows[0]?.map((cell, ci) => (
+                <th key={ci} style={{ background: "#e5e7eb", padding: "6px 10px", textAlign: "left", fontWeight: "600", border: "1px solid #d1d5db" }}>{renderInline(cell)}</th>
+              ))}</tr>
             </thead>
             <tbody>
               {rows.slice(1).map((row, ri) => (
-                <tr key={ri}>
-                  {row.map((cell, ci) => (
-                    <td key={ci} style={styles.td}>{renderInline(cell)}</td>
-                  ))}
-                </tr>
+                <tr key={ri}>{row.map((cell, ci) => (
+                  <td key={ci} style={{ padding: "5px 10px", border: "1px solid #d1d5db" }}>{renderInline(cell)}</td>
+                ))}</tr>
               ))}
             </tbody>
           </table>
         </div>
       );
-      i = endIndex;
-      continue;
+      i = endIndex; continue;
     }
 
-    // Koppen
     if (trimmed.startsWith("### ")) {
-      result.push(<div key={i} style={styles.h3}>{renderInline(trimmed.slice(4))}</div>);
-      i++;
-      continue;
+      result.push(<div key={i} style={{ fontSize: "15px", fontWeight: "700", margin: "6px 0 2px 0", color: "#374151" }}>{renderInline(trimmed.slice(4))}</div>);
+      i++; continue;
     }
 
     if (trimmed.startsWith("## ")) {
-      result.push(<div key={i} style={styles.h2}>{renderInline(trimmed.slice(3))}</div>);
-      i++;
-      continue;
+      result.push(<div key={i} style={{ fontSize: "16px", fontWeight: "700", margin: "8px 0 4px 0" }}>{renderInline(trimmed.slice(3))}</div>);
+      i++; continue;
     }
 
     if (trimmed.startsWith("# ")) {
-      result.push(<div key={i} style={styles.h1}>{renderInline(trimmed.slice(2))}</div>);
-      i++;
-      continue;
+      result.push(<div key={i} style={{ fontSize: "18px", fontWeight: "700", margin: "10px 0 4px 0" }}>{renderInline(trimmed.slice(2))}</div>);
+      i++; continue;
     }
 
-    // Lijstitem
     if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
-      result.push(<div key={i} style={styles.listItem}>• {renderInline(trimmed.slice(2))}</div>);
-      i++;
-      continue;
+      result.push(<div key={i} style={{ margin: "3px 0", paddingLeft: "4px" }}>• {renderInline(trimmed.slice(2))}</div>);
+      i++; continue;
     }
 
-    // Gewone alinea
-    result.push(<div key={i} style={styles.paragraph}>{renderInline(trimmed)}</div>);
+    result.push(<div key={i} style={{ margin: "4px 0" }}>{renderInline(trimmed)}</div>);
     i++;
   }
 
@@ -499,18 +687,9 @@ function renderMarkdown(text) {
 
 // ─── Subcomponenten ───────────────────────────────────────────────────────────
 
-function TabButton({ label, active, onClick }) {
+function HeadphoneIcon({ size = 16 }) {
   return (
-    <button onClick={onClick} style={{ ...styles.tab, ...(active ? styles.tabActive : {}) }}>
-      {label}
-    </button>
-  );
-}
-
-function HeadphoneIcon({ size = 22, dark = false }) {
-  const stroke = dark ? "#111827" : "white";
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M4 12a8 8 0 0 1 16 0" />
       <rect x="2" y="12" width="4" height="7" rx="2" />
       <rect x="18" y="12" width="4" height="7" rx="2" />
@@ -526,248 +705,3 @@ function PauseIcon({ size = 16 }) {
     </svg>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = {
-
-page: {
-  minHeight: "100vh",
-  background: "#f2f2f2",
-  padding: "40px 20px",
-  fontFamily: "Inter, system-ui, Arial, sans-serif",
-},
-
-wrapper: {
-  maxWidth: "580px",
-  margin: "0 auto",
-  background: "#ffffff",
-  borderRadius: "20px",
-  padding: "24px",
-  boxShadow: "0 8px 30px rgba(0,0,0,0.05)",
-},
-
-header: {
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-  marginBottom: "20px",
-  background: "#ffffff",
-  padding: "16px",
-  borderRadius: "14px",
-},
-
-brandBlock: {
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-},
-
-logo: {
-  width: "40px",
-  height: "40px",
-  objectFit: "contain",
-},
-
-title: {
-  margin: 0,
-  fontSize: "22px",
-  fontWeight: "700",
-  letterSpacing: "0.4px",
-},
-
-subtitle: {
-  margin: "2px 0 0 0",
-  fontSize: "13px",
-  color: "#6b7280",
-},
-
-tabsRow: {
-  display: "flex",
-  gap: "10px",
-  marginBottom: "16px",
-},
-
-tab: {
-  padding: "10px 18px",
-  borderRadius: "999px",
-  border: "1px solid #ddd",
-  background: "#eeeeee",
-  fontSize: "16px",
-  fontWeight: "600",
-  cursor: "pointer",
-},
-
-tabActive: {
-  background: "#f48c00",
-  color: "white",
-  border: "1px solid #f48c00",
-},
-
-topicRow: {
-  display: "flex",
-  gap: "10px",
-  marginBottom: "12px",
-},
-
-topicAudioBtn: {
-  display: "flex",
-  alignItems: "center",
-  gap: "6px",
-  borderRadius: "999px",
-  border: "1px solid #ddd",
-  background: "#ffffff",
-  padding: "8px 14px",
-  fontSize: "14px",
-  cursor: "pointer",
-},
-
-faqBtn: {
-  borderRadius: "999px",
-  border: "1px solid #ddd",
-  background: "#ffffff",
-  padding: "8px 14px",
-  fontSize: "13px",
-  cursor: "pointer",
-},
-
-faqPanel: {
-  marginBottom: "12px",
-},
-
-faqOptions: {
-  display: "flex",
-  gap: "8px",
-  flexWrap: "wrap",
-},
-
-faqOptionBtn: {
-  borderRadius: "999px",
-  border: "1px solid #ddd",
-  background: "#ffffff",
-  padding: "6px 12px",
-  fontSize: "13px",
-  cursor: "pointer",
-},
-
-faqBackBtn: {
-  borderRadius: "999px",
-  border: "1px solid #ddd",
-  background: "#ffffff",
-  padding: "6px 10px",
-  fontSize: "12px",
-  marginBottom: "8px",
-  cursor: "pointer",
-},
-
-chatBox: {
-  minHeight: "360px",
-  maxHeight: "360px",
-  overflowY: "auto",
-  background: "#f7f7f7",
-  border: "1px solid #d8d8d8",
-  borderRadius: "18px",
-  padding: "14px",
-},
-
-messageRow: {
-  display: "flex",
-  marginBottom: "12px",
-},
-
-bubble: {
-  maxWidth: "70%",
-  borderRadius: "14px",
-  padding: "12px 14px",
-},
-
-assistantBubble: {
-  background: "#e9eaec",
-},
-
-userBubble: {
-  background: "#f3e2c8",
-},
-
-label: {
-  fontSize: "11px",
-  color: "#6b7280",
-  marginBottom: "6px",
-},
-
-text: {
-  fontSize: "15px",
-  lineHeight: 1.5,
-},
-
-cursor: {
-  display: "inline-block",
-  color: "#f48c00",
-  fontWeight: "bold",
-},
-
-inputRow: {
-  display: "flex",
-  gap: "10px",
-  marginTop: "14px",
-},
-
-input: {
-  flex: 1,
-  borderRadius: "999px",
-  border: "1px solid #ddd",
-  padding: "12px 16px",
-  fontSize: "14px",
-  background: "#ffffff",
-  resize: "none",
-},
-
-sendButton: {
-  borderRadius: "999px",
-  border: "none",
-  background: "#f48c00",
-  color: "white",
-  fontWeight: "600",
-  padding: "12px 20px",
-  cursor: "pointer",
-},
-
-footer: {
-  textAlign: "center",
-  marginTop: "18px",
-  fontSize: "12px",
-  color: "#9ca3af",
-},
-
-h1: { fontSize: "18px", fontWeight: "700", margin: "10px 0 4px 0" },
-h2: { fontSize: "16px", fontWeight: "700", margin: "8px 0 4px 0" },
-h3: { fontSize: "15px", fontWeight: "700", margin: "6px 0 2px 0", color: "#374151" },
-paragraph: { margin: "4px 0" },
-listItem: { margin: "3px 0", paddingLeft: "4px" },
-hr: { border: "none", borderTop: "1px solid #d1d5db", margin: "8px 0" },
-
-tableWrapper: {
-  overflowX: "auto",
-  margin: "8px 0",
-},
-
-table: {
-  borderCollapse: "collapse",
-  fontSize: "13px",
-  width: "100%",
-},
-
-th: {
-  background: "#e5e7eb",
-  padding: "6px 10px",
-  textAlign: "left",
-  fontWeight: "600",
-  border: "1px solid #d1d5db",
-},
-
-td: {
-  padding: "5px 10px",
-  border: "1px solid #d1d5db",
-},
-
-};
