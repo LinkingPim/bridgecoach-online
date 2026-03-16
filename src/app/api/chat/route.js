@@ -84,31 +84,19 @@ function getFallbackAudioByTab(tab) {
 function findFaqAnswer(message, faqData) {
   const question = normalizeText(message);
 
+  // Sla hoofdcategorieën altijd over — dit zijn tabbladen, geen antwoorden
+  const tabKeys = ["opening", "bijbod", "uitkomst"];
+
   for (const key of Object.keys(faqData)) {
+    if (tabKeys.includes(key)) continue;
+
     const normalizedKey = normalizeText(key);
 
     if (question.includes(normalizedKey)) {
       const item = faqData[key];
 
-      // Sla over als het een tabblad-categorie is (geen direct antwoord)
-      if (!item || typeof item !== "string" && !item.answer) continue;
-
-      if (typeof item === "string") {
-        return { answer: item, audio: null, source: "faq" };
-      }
-
-      return {
-        answer: item.answer || "",
-        audio: item.audio || null,
-        source: "faq",
-      };
-    }
-  }
-
-  return null;
-}
-    if (question.includes(normalizedKey)) {
-      const item = faqData[key];
+      // Sla over als er geen direct antwoord is
+      if (!item || (typeof item !== "string" && !item.answer)) continue;
 
       if (typeof item === "string") {
         return { answer: item, audio: null, source: "faq" };
@@ -156,7 +144,7 @@ export async function POST(req) {
     const body = await req.json();
     const message = body?.message || "";
     const tab = body?.tab || "bieden";
-    const history = body?.history || []; // gespreksgeschiedenis
+    const history = body?.history || [];
 
     if (!message.trim()) {
       return Response.json(
@@ -224,6 +212,12 @@ Gebruik altijd deze opbouw:
 - Gebruik GEEN vetgedrukte tekst (**bold**) in opsommingstekens — alleen bij de aanbevolen bieding
 - Korte, scanbare zinnen
 
+## Tabbladen
+De app heeft drie tabbladen: Opening, Bijbod en Uitkomst.
+De gebruiker zit nu in tabblad: ${tab}
+Als de gebruiker een vraag stelt die beter past bij een ander tabblad, beantwoord de vraag dan kort en voeg toe:
+"💡 Voor meer uitleg hierover kun je ook het tabblad [naam] gebruiken."
+
 ## Biedconventies
 - Standaard Nederlands clubsysteem
 - Punten: A=4, H=3, V=2, B=1
@@ -232,20 +226,16 @@ Gebruik altijd deze opbouw:
 - Alleen bridge-vragen beantwoorden
 - Niet te technisch voor beginners
 
-De gebruiker zit in tabblad: ${tab}
-
 Gebruik deze bridgekennis als belangrijkste bron:
 ${knowledgeContext}
 `;
 
-    // Bouw de berichtenlijst op met geschiedenis
     const messages = [
       { role: "system", content: systemPrompt },
       ...history,
       { role: "user", content: message },
     ];
 
-    // Start streaming response
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
