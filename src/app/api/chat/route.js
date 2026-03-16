@@ -9,6 +9,8 @@ const client = new OpenAI({
 const CONTENT_DIR = path.join(process.cwd(), "public", "content");
 const AUDIO_DIR = path.join(process.cwd(), "public", "audio");
 
+// ─── Hulpfuncties ────────────────────────────────────────────────────────────
+
 function readJsonSafe(filePath) {
   try {
     if (!fs.existsSync(filePath)) return {};
@@ -38,6 +40,8 @@ function normalizeText(text) {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+// ─── Data ophalen ────────────────────────────────────────────────────────────
 
 function getFaqData() {
   const faqPath = path.join(CONTENT_DIR, "faq.json");
@@ -69,6 +73,14 @@ function getAudioForSlug(slug) {
   return null;
 }
 
+function getFallbackAudioByTab(tab) {
+  if (tab === "bieden") return getAudioForSlug("opening");
+  if (tab === "verdediging") return getAudioForSlug("uitkomst");
+  return null;
+}
+
+// ─── FAQ match ───────────────────────────────────────────────────────────────
+
 function findFaqAnswer(message, faqData) {
   const question = normalizeText(message);
 
@@ -79,11 +91,7 @@ function findFaqAnswer(message, faqData) {
       const item = faqData[key];
 
       if (typeof item === "string") {
-        return {
-          answer: item,
-          audio: null,
-          source: "faq",
-        };
+        return { answer: item, audio: null, source: "faq" };
       }
 
       return {
@@ -97,78 +105,7 @@ function findFaqAnswer(message, faqData) {
   return null;
 }
 
-function splitIntoChunks(content) {
-  return content
-    .split(/\n\s*\n/)
-    .map((chunk) => chunk.trim())
-    .filter(Boolean);
-}
-
-function scoreChunk(question, chunk) {
-  const qWords = normalizeText(question).split(" ").filter(Boolean);
-  const normalizedChunk = normalizeText(chunk);
-
-  let score = 0;
-
-  for (const word of qWords) {
-    if (word.length < 3) continue;
-    if (normalizedChunk.includes(word)) {
-      score += 1;
-    }
-  }
-
-  return score;
-}
-
-function findMarkdownAnswer(message, markdownFiles, tab) {
-  const tabToSlugMap = {
-    bieden: ["opening", "antwoorden"],
-    spel: [],
-    verdediging: ["uitkomst"],
-  };
-
-  const preferredSlugs = tabToSlugMap[tab] || [];
-
-  let candidates = markdownFiles;
-
-  if (preferredSlugs.length > 0) {
-    const filtered = markdownFiles.filter((file) =>
-      preferredSlugs.includes(file.slug)
-    );
-    if (filtered.length > 0) {
-      candidates = filtered;
-    }
-  }
-
-  let bestMatch = null;
-
-  for (const file of candidates) {
-    const chunks = splitIntoChunks(file.content);
-
-    for (const chunk of chunks) {
-      const score = scoreChunk(message, chunk);
-
-      if (!bestMatch || score > bestMatch.score) {
-        bestMatch = {
-          score,
-          answer: chunk,
-          slug: file.slug,
-          source: "markdown",
-        };
-      }
-    }
-  }
-
-  if (!bestMatch || bestMatch.score < 2) {
-    return null;
-  }
-
-  return {
-    answer: bestMatch.answer,
-    audio: getAudioForSlug(bestMatch.slug),
-    source: "markdown",
-  };
-}
+// ─── Markdown als context voor OpenAI ────────────────────────────────────────
 
 function buildKnowledgeContext(markdownFiles, tab) {
   const tabToSlugMap = {
@@ -178,16 +115,13 @@ function buildKnowledgeContext(markdownFiles, tab) {
   };
 
   const preferredSlugs = tabToSlugMap[tab] || [];
-
   let files = markdownFiles;
 
   if (preferredSlugs.length > 0) {
     const filtered = markdownFiles.filter((file) =>
       preferredSlugs.includes(file.slug)
     );
-    if (filtered.length > 0) {
-      files = filtered;
-    }
+    if (filtered.length > 0) files = filtered;
   }
 
   return files
@@ -195,11 +129,7 @@ function buildKnowledgeContext(markdownFiles, tab) {
     .join("\n\n--------------------\n\n");
 }
 
-function getFallbackAudioByTab(tab) {
-  if (tab === "bieden") return getAudioForSlug("opening");
-  if (tab === "verdediging") return getAudioForSlug("uitkomst");
-  return null;
-}
+// ─── API route ───────────────────────────────────────────────────────────────
 
 export async function POST(req) {
   try {
@@ -217,7 +147,7 @@ export async function POST(req) {
     const faqData = getFaqData();
     const markdownFiles = getMarkdownFiles();
 
-    // 1. Eerst FAQ
+    // 1. Eerst FAQ checken
     const faqMatch = findFaqAnswer(message, faqData);
     if (faqMatch) {
       return Response.json({
@@ -227,17 +157,7 @@ export async function POST(req) {
       });
     }
 
-    // 2. Daarna zoeken in markdown
-    const markdownMatch = findMarkdownAnswer(message, markdownFiles, tab);
-    if (markdownMatch) {
-      return Response.json({
-        answer: markdownMatch.answer,
-        audio: markdownMatch.audio,
-        source: markdownMatch.source,
-      });
-    }
-
-    // 3. Alleen dan OpenAI
+    // 2. OpenAI met markdown als context
     const knowledgeContext = buildKnowledgeContext(markdownFiles, tab);
 
     const systemPrompt = `
@@ -246,15 +166,14 @@ Je begeleidt beginners en gemiddelde spelers op een heldere, stapsgewijze manier
 
 ## Persoonlijkheid en toon
 - Warm, aanmoedigend en geduldig
-- Begin een nieuw onderwerp altijd met een korte begroeting of motiverende zin zoals "Goed dat je dit wilt leren 👍"
+- Begin een nieuw onderwerp altijd met een korte motiverende zin zoals "Goed dat je dit wilt leren 👍"
 - Stel na je uitleg een vervolgvraag of quizvraag om te controleren of de speler het begrijpt
 - Gebruik "je" en "jij", geen formeel "u"
 
 ## Taalgebruik
 - Altijd in het Nederlands
-- Gebruik Nederlandse bridge-terminologie:
-  - Kaartwaarden: A (Aas), H (Heer), V (Vrouw), B (Boer)
-  - Termen: steun, stop, doublet, informatiedoublet, manche, deelscore, fit, volgbod, uitkomen, slag, troef, bieding, pas
+- Kaartwaarden: A (Aas), H (Heer), V (Vrouw), B (Boer)
+- Termen: steun, stop, doublet, informatiedoublet, manche, deelscore, fit, volgbod, uitkomen, slag, troef, bieding, pas
 - Schrijf kaartsymbolen altijd met emoji: ♠️ ♥️ ♦️ ♣️
 
 ## Antwoordstructuur
@@ -267,14 +186,14 @@ Gebruik altijd deze opbouw:
    ♦️ 8 6 2
    ♣️ V 10 4
 4. Aanbevolen bieding met pijl: ➡️ 1♠️
-5. Korte uitleg van de bieding
+5. Korte uitleg van de bieding met opsommingstekens
 6. Samenvatting als ✅ blok met kernpunten
+7. Sluit altijd af met een oefenvraag of quizvraag 🃏
 
 ## Opmaakregels
 - Gebruik emoji voor structuur: ✅ 1️⃣ 2️⃣ 3️⃣ ➡️ ⚠️
 - Horizontale lijnen (---) tussen secties
-- Korte, scanbarecompact zinnen — geen lange alinea's
-- Sluit altijd af met een oefenhandje of quizvraag 🃏
+- Korte, scanbare zinnen — geen lange alinea's zonder scheiding
 
 ## Biedconventies
 - Standaard Nederlands clubsysteem
@@ -295,25 +214,21 @@ ${knowledgeContext}
 Vraag van de gebruiker:
 ${message}
 
-Geef een kort en duidelijk antwoord in de stijl van Bridgecoach.
+Geef een gestructureerd antwoord in de stijl van BridgeCoach.
 `;
 
-    const response = await client.responses.create({
-      model: "gpt-5-mini",
-      input: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
       ],
+      max_tokens: 1500,
     });
 
     const answer =
-      response.output_text || "Er ging iets mis. Probeer het opnieuw.";
+      response.choices?.[0]?.message?.content ||
+      "Er ging iets mis. Probeer het opnieuw.";
 
     return Response.json({
       answer,
