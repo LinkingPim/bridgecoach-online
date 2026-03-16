@@ -276,12 +276,9 @@ export default function Home() {
         ]);
       }
 
-      // Tel de vraag en vergrendel na 3
       const newCount = questionCount + 1;
       setQuestionCount(newCount);
-      if (newCount >= 3) {
-        setIsLocked(true);
-      }
+      if (newCount >= 3) setIsLocked(true);
 
     } catch (error) {
       setMessages((prev) => {
@@ -324,107 +321,31 @@ export default function Home() {
           padding: 20px 16px;
           box-shadow: 0 8px 30px rgba(0,0,0,0.05);
         }
-        .bc-header {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 16px;
-        }
-        .bc-logo {
-          width: 36px;
-          height: 36px;
-          object-fit: contain;
-          flex-shrink: 0;
-        }
-        .bc-title {
-          margin: 0;
-          font-size: 20px;
-          font-weight: 700;
-          letter-spacing: 0.4px;
-        }
-        .bc-subtitle {
-          margin: 2px 0 0 0;
-          font-size: 12px;
-          color: #6b7280;
-        }
-        .bc-tabs {
-          display: flex;
-          gap: 8px;
-          margin-bottom: 12px;
-          flex-wrap: wrap;
-        }
+        .bc-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .bc-logo { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
+        .bc-title { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 0.4px; }
+        .bc-subtitle { margin: 2px 0 0 0; font-size: 12px; color: #6b7280; }
+        .bc-tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
         .bc-tab {
-          flex: 1;
-          min-width: 80px;
-          padding: 10px 8px;
-          border-radius: 999px;
-          border: 1px solid #ddd;
-          background: #eeeeee;
-          font-size: 15px;
-          font-weight: 600;
-          cursor: pointer;
-          text-align: center;
-          white-space: nowrap;
+          flex: 1; min-width: 80px; padding: 10px 8px;
+          border-radius: 999px; border: 1px solid #ddd; background: #eeeeee;
+          font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; white-space: nowrap;
         }
-        .bc-tab-active {
-          background: #f48c00;
-          color: white;
-          border-color: #f48c00;
-        }
-        .bc-topicrow {
-          display: flex;
-          gap: 8px;
-          margin-bottom: 12px;
-          flex-wrap: wrap;
-        }
+        .bc-tab-active { background: #f48c00; color: white; border-color: #f48c00; }
+        .bc-topicrow { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
         .bc-audiobtn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          border-radius: 999px;
-          border: 1px solid #ddd;
-          background: #ffffff;
-          padding: 8px 14px;
-          font-size: 14px;
-          cursor: pointer;
-          white-space: nowrap;
+          display: flex; align-items: center; gap: 6px;
+          border-radius: 999px; border: 1px solid #ddd; background: #ffffff;
+          padding: 8px 14px; font-size: 14px; cursor: pointer; white-space: nowrap;
         }
-        .bc-faqbtn {
-          border-radius: 999px;
-          border: 1px solid #ddd;
-          background: #ffffff;
-          padding: 8px 14px;
-          font-size: 14px;
-          cursor: pointer;
-        }
+        .bc-faqbtn { border-radius: 999px; border: 1px solid #ddd; background: #ffffff; padding: 8px 14px; font-size: 14px; cursor: pointer; }
         .bc-faqpanel { margin-bottom: 12px; }
         .bc-faqoptions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .bc-faqoptionbtn {
-          border-radius: 999px;
-          border: 1px solid #ddd;
-          background: #ffffff;
-          padding: 6px 12px;
-          font-size: 13px;
-          cursor: pointer;
-        }
-        .bc-faqbackbtn {
-          border-radius: 999px;
-          border: 1px solid #ddd;
-          background: #ffffff;
-          padding: 6px 10px;
-          font-size: 12px;
-          margin-bottom: 8px;
-          cursor: pointer;
-        }
+        .bc-faqoptionbtn { border-radius: 999px; border: 1px solid #ddd; background: #ffffff; padding: 6px 12px; font-size: 13px; cursor: pointer; }
+        .bc-faqbackbtn { border-radius: 999px; border: 1px solid #ddd; background: #ffffff; padding: 6px 10px; font-size: 12px; margin-bottom: 8px; cursor: pointer; }
         .bc-chatbox {
-          min-height: 300px;
-          max-height: 400px;
-          overflow-y: auto;
-          background: #f7f7f7;
-          border: 1px solid #d8d8d8;
-          border-radius: 18px;
-          padding: 12px;
-          position: relative;
+          min-height: 300px; max-height: 400px; overflow-y: auto;
+          background: #f7f7f7; border: 1px solid #d8d8d8; border-radius: 18px; padding: 12px;
         }
         .bc-messagerow { display: flex; margin-bottom: 12px; }
         .bc-bubble { max-width: 80%; border-radius: 14px; padding: 10px 12px; }
@@ -433,96 +354,37 @@ export default function Home() {
         .bc-label { font-size: 11px; color: #6b7280; margin-bottom: 5px; }
         .bc-text { font-size: 15px; line-height: 1.5; }
         .bc-cursor { display: inline-block; color: #f48c00; font-weight: bold; }
-        .bc-inputrow {
-          display: flex;
-          gap: 8px;
-          margin-top: 12px;
-          align-items: flex-end;
-        }
+        .bc-inputrow { display: flex; gap: 8px; margin-top: 12px; align-items: flex-end; }
         .bc-input {
-          flex: 1;
-          border-radius: 20px;
-          border: 1px solid #ddd;
-          padding: 10px 14px;
-          font-size: 14px;
-          background: #ffffff;
-          resize: none;
-          font-family: inherit;
-          min-width: 0;
+          flex: 1; border-radius: 20px; border: 1px solid #ddd;
+          padding: 10px 14px; font-size: 14px; background: #ffffff;
+          resize: none; font-family: inherit; min-width: 0;
         }
         .bc-sendbtn {
-          border-radius: 999px;
-          border: none;
-          background: #f48c00;
-          color: white;
-          font-weight: 600;
-          padding: 10px 16px;
-          cursor: pointer;
-          white-space: nowrap;
-          font-size: 14px;
-          flex-shrink: 0;
+          border-radius: 999px; border: none; background: #f48c00; color: white;
+          font-weight: 600; padding: 10px 16px; cursor: pointer;
+          white-space: nowrap; font-size: 14px; flex-shrink: 0;
         }
         .bc-sendbtn:disabled { background: #ccc; cursor: not-allowed; }
-        .bc-footer {
-          text-align: center;
-          margin-top: 16px;
-          font-size: 11px;
-          color: #9ca3af;
-        }
-
-        /* Wachtwoordscherm */
+        .bc-footer { text-align: center; margin-top: 16px; font-size: 11px; color: #9ca3af; }
         .bc-lock-overlay {
-          background: #f7f7f7;
-          border: 1px solid #d8d8d8;
-          border-radius: 18px;
-          padding: 24px 20px;
-          text-align: center;
-          margin-top: 12px;
+          background: #f7f7f7; border: 1px solid #d8d8d8; border-radius: 18px;
+          padding: 24px 20px; text-align: center; margin-top: 12px;
         }
-        .bc-lock-icon {
-          font-size: 32px;
-          margin-bottom: 12px;
-        }
-        .bc-lock-title {
-          font-size: 17px;
-          font-weight: 700;
-          margin: 0 0 6px 0;
-          color: #111827;
-        }
-        .bc-lock-text {
-          font-size: 14px;
-          color: #6b7280;
-          margin: 0 0 16px 0;
-        }
+        .bc-lock-icon { font-size: 32px; margin-bottom: 12px; }
+        .bc-lock-title { font-size: 17px; font-weight: 700; margin: 0 0 6px 0; color: #111827; }
+        .bc-lock-text { font-size: 14px; color: #6b7280; margin: 0 0 16px 0; }
         .bc-lock-input {
-          width: 100%;
-          border-radius: 12px;
-          border: 1px solid #ddd;
-          padding: 10px 14px;
-          font-size: 15px;
-          text-align: center;
-          letter-spacing: 2px;
-          margin-bottom: 10px;
-          font-family: inherit;
+          width: 100%; border-radius: 12px; border: 1px solid #ddd;
+          padding: 10px 14px; font-size: 15px; text-align: center;
+          letter-spacing: 2px; margin-bottom: 10px; font-family: inherit;
         }
         .bc-lock-input:focus { outline: none; border-color: #f48c00; }
         .bc-lock-btn {
-          width: 100%;
-          border-radius: 999px;
-          border: none;
-          background: #f48c00;
-          color: white;
-          font-weight: 600;
-          padding: 11px;
-          font-size: 15px;
-          cursor: pointer;
+          width: 100%; border-radius: 999px; border: none; background: #f48c00;
+          color: white; font-weight: 600; padding: 11px; font-size: 15px; cursor: pointer;
         }
-        .bc-lock-error {
-          font-size: 13px;
-          color: #e11d48;
-          margin-top: 8px;
-        }
-
+        .bc-lock-error { font-size: 13px; color: #e11d48; margin-top: 8px; }
         @media (max-width: 400px) {
           .bc-title { font-size: 17px; }
           .bc-tab { font-size: 14px; padding: 9px 6px; }
@@ -571,7 +433,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Chatbox of wachtwoordscherm */}
           {isLocked ? (
             <div className="bc-lock-overlay">
               <div className="bc-lock-icon">🔒</div>
@@ -643,15 +504,19 @@ export default function Home() {
 // ─── Markdown renderer ────────────────────────────────────────────────────────
 
 function renderInline(text) {
-  const parts = text.split(/(\*\*.*?\*\*|[♠♥♦♣])/g);
+  // Match emoji-varianten (♥️ ♦️ ♠️ ♣️) én gewone symbolen (♥ ♦ ♠ ♣)
+  const parts = text.split(/(♠️|♥️|♦️|♣️|\*\*.*?\*\*|[♠♥♦♣])/g);
+
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={i} style={{ fontWeight: "700" }}>{renderInline(part.slice(2, -2))}</strong>;
     }
-    if (part === "♥" || part === "♦") {
+    // Rood: harten en ruiten (met en zonder emoji selector)
+    if (part === "♥" || part === "♥️" || part === "♦" || part === "♦️") {
       return <span key={i} style={{ color: "#e11d48", fontWeight: "600" }}>{part}</span>;
     }
-    if (part === "♠" || part === "♣") {
+    // Zwart: schoppen en klaveren (met en zonder emoji selector)
+    if (part === "♠" || part === "♠️" || part === "♣" || part === "♣️") {
       return <span key={i} style={{ color: "#111827", fontWeight: "600" }}>{part}</span>;
     }
     return <span key={i}>{part}</span>;
