@@ -136,6 +136,7 @@ export async function POST(req) {
     const body = await req.json();
     const message = body?.message || "";
     const tab = body?.tab || "bieden";
+    const history = body?.history || []; // gespreksgeschiedenis
 
     if (!message.trim()) {
       return Response.json(
@@ -147,7 +148,7 @@ export async function POST(req) {
     const faqData = getFaqData();
     const markdownFiles = getMarkdownFiles();
 
-    // 1. Eerst FAQ checken (geen streaming nodig, antwoord is direct)
+    // 1. Eerst FAQ checken
     const faqMatch = findFaqAnswer(message, faqData);
     if (faqMatch) {
       return Response.json({
@@ -159,6 +160,7 @@ export async function POST(req) {
 
     // 2. OpenAI met streaming
     const knowledgeContext = buildKnowledgeContext(markdownFiles, tab);
+    const isFirstQuestion = history.length === 0;
 
     const systemPrompt = `
 Je bent BridgeCoach, een vriendelijke en deskundige Nederlandse bridge coach.
@@ -166,7 +168,7 @@ Je begeleidt beginners en gemiddelde spelers op een heldere, stapsgewijze manier
 
 ## Persoonlijkheid en toon
 - Warm, aanmoedigend en geduldig
-- Begin een nieuw onderwerp altijd met een korte motiverende zin zoals "Goed dat je dit wilt leren 👍"
+${isFirstQuestion ? '- Begin je antwoord met een korte motiverende zin zoals "Goed dat je dit wilt leren 👍"' : '- Begin direct met je antwoord, zonder begroeting of motiverende openingszin'}
 - Stel na je uitleg één korte quizvraag om te controleren of de speler het begrijpt
 - Gebruik "je" en "jij", geen formeel "u"
 
@@ -198,7 +200,8 @@ Gebruik altijd deze opbouw:
 ## Opmaakregels
 - Gebruik emoji voor structuur: ✅ 1️⃣ 2️⃣ 3️⃣ ➡️ ⚠️
 - Horizontale lijnen (---) tussen secties
-- Gebruik GEEN markdown-koppen zoals ## of ### — gebruik alleen vetgedrukte tekst en emoji
+- Gebruik GEEN markdown-koppen zoals ## of ###
+- Gebruik GEEN vetgedrukte tekst (**bold**) in opsommingstekens — alleen bij de aanbevolen bieding
 - Korte, scanbare zinnen
 
 ## Biedconventies
@@ -210,18 +213,17 @@ Gebruik altijd deze opbouw:
 - Niet te technisch voor beginners
 
 De gebruiker zit in tabblad: ${tab}
-`;
 
-    const userPrompt = `
 Gebruik deze bridgekennis als belangrijkste bron:
-
 ${knowledgeContext}
-
-Vraag van de gebruiker:
-${message}
-
-Geef een compact, gestructureerd antwoord in de stijl van BridgeCoach. Vermijd herhaling.
 `;
+
+    // Bouw de berichtenlijst op met geschiedenis
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...history,
+      { role: "user", content: message },
+    ];
 
     // Start streaming response
     const encoder = new TextEncoder();
@@ -231,10 +233,7 @@ Geef een compact, gestructureerd antwoord in de stijl van BridgeCoach. Vermijd h
         try {
           const openaiStream = await client.chat.completions.create({
             model: "gpt-4o-mini",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt },
-            ],
+            messages,
             max_tokens: 800,
             stream: true,
           });

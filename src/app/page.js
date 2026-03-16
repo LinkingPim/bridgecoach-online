@@ -16,6 +16,9 @@ export default function Home() {
     },
   ]);
 
+  // Gespreksgeschiedenis voor OpenAI (alleen user/assistant, geen systeem)
+  const [history, setHistory] = useState([]);
+
   const [faqTree, setFaqTree] = useState(null);
   const [faqOptions, setFaqOptions] = useState(null);
   const [faqPath, setFaqPath] = useState([]);
@@ -29,10 +32,8 @@ export default function Home() {
 
   async function ensureFaqLoaded() {
     if (faqTree) return faqTree;
-
     const res = await fetch("/content/faq.json");
     if (!res.ok) throw new Error("faq.json kon niet worden geladen.");
-
     const data = await res.json();
     setFaqTree(data);
     return data;
@@ -103,9 +104,7 @@ export default function Home() {
       setLoading(true);
       const data = await ensureFaqLoaded();
       const topicFaq = data?.[tab];
-
       if (!topicFaq || !topicFaq.options) throw new Error("Geen FAQ gevonden.");
-
       setFaqOptions(topicFaq.options);
       setFaqPath([]);
     } catch (error) {
@@ -176,6 +175,7 @@ export default function Home() {
     resetFaq();
     setTab(newTab);
     setInput("");
+    setHistory([]); // reset geschiedenis bij tabwissel
     setMessages([{ role: "assistant", text: getIntro(newTab), source: "system" }]);
   }
 
@@ -188,14 +188,18 @@ export default function Home() {
     setInput("");
     setLoading(true);
 
-    // Voeg direct een leeg assistant-bericht toe dat we gaan vullen via streaming
+    // Voeg direct een leeg assistant-bericht toe voor streaming
     setMessages((prev) => [...prev, { role: "assistant", text: "", source: "openai", streaming: true }]);
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed, tab }),
+        body: JSON.stringify({
+          message: trimmed,
+          tab,
+          history, // stuur gespreksgeschiedenis mee
+        }),
       });
 
       if (!res.ok) {
@@ -203,24 +207,32 @@ export default function Home() {
         throw new Error(data?.error || "Er ging iets mis.");
       }
 
-      // Controleer of het een stream is of een gewone JSON (FAQ)
       const contentType = res.headers.get("Content-Type") || "";
 
       if (contentType.includes("application/json")) {
-        // FAQ antwoord — geen streaming
+        // FAQ antwoord
         const data = await res.json();
+        const answerText = data.answer || "Ik kon geen antwoord maken.";
+
         setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = {
             role: "assistant",
-            text: data.answer || "Ik kon geen antwoord maken.",
+            text: answerText,
             source: data.source || "faq",
             streaming: false,
           };
           return updated;
         });
+
+        // Voeg toe aan geschiedenis
+        setHistory((prev) => [
+          ...prev,
+          { role: "user", content: trimmed },
+          { role: "assistant", content: answerText },
+        ]);
       } else {
-        // Streaming antwoord — lees chunk voor chunk
+        // Streaming antwoord
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let fullText = "";
@@ -243,7 +255,7 @@ export default function Home() {
           });
         }
 
-        // Markeer streaming als klaar
+        // Streaming klaar
         setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = {
@@ -252,6 +264,13 @@ export default function Home() {
           };
           return updated;
         });
+
+        // Voeg toe aan geschiedenis
+        setHistory((prev) => [
+          ...prev,
+          { role: "user", content: trimmed },
+          { role: "assistant", content: fullText },
+        ]);
       }
     } catch (error) {
       setMessages((prev) => {
@@ -622,7 +641,6 @@ cursor: {
   display: "inline-block",
   color: "#f48c00",
   fontWeight: "bold",
-  animation: "blink 1s step-start infinite",
 },
 
 inputRow: {
