@@ -7,6 +7,10 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [questionCount, setQuestionCount] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const [messages, setMessages] = useState([
     {
@@ -27,6 +31,21 @@ export default function Home() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading, faqOptions]);
+
+  function checkPassword() {
+    const correct = process.env.NEXT_PUBLIC_ACCESS_CODE || "bridge2026";
+    if (passwordInput === correct) {
+      setIsLocked(false);
+      setPasswordInput("");
+      setPasswordError("");
+    } else {
+      setPasswordError("Onjuiste toegangscode. Probeer het opnieuw.");
+    }
+  }
+
+  function handlePasswordKeyDown(e) {
+    if (e.key === "Enter") checkPassword();
+  }
 
   async function ensureFaqLoaded() {
     if (faqTree) return faqTree;
@@ -179,7 +198,7 @@ export default function Home() {
 
   async function sendMessage() {
     const trimmed = input.trim();
-    if (!trimmed || loading) return;
+    if (!trimmed || loading || isLocked) return;
 
     resetFaq();
     setMessages((prev) => [...prev, { role: "user", text: trimmed, source: "user" }]);
@@ -230,7 +249,6 @@ export default function Home() {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-
           fullText += decoder.decode(value, { stream: true });
 
           setMessages((prev) => {
@@ -247,10 +265,7 @@ export default function Home() {
 
         setMessages((prev) => {
           const updated = [...prev];
-          updated[updated.length - 1] = {
-            ...updated[updated.length - 1],
-            streaming: false,
-          };
+          updated[updated.length - 1] = { ...updated[updated.length - 1], streaming: false };
           return updated;
         });
 
@@ -260,6 +275,14 @@ export default function Home() {
           { role: "assistant", content: fullText },
         ]);
       }
+
+      // Tel de vraag en vergrendel na 3
+      const newCount = questionCount + 1;
+      setQuestionCount(newCount);
+      if (newCount >= 3) {
+        setIsLocked(true);
+      }
+
     } catch (error) {
       setMessages((prev) => {
         const updated = [...prev];
@@ -285,7 +308,6 @@ export default function Home() {
 
   return (
     <>
-      {/* Responsive styles via <style> tag */}
       <style>{`
         * { box-sizing: border-box; }
         .bc-page {
@@ -375,14 +397,8 @@ export default function Home() {
           font-size: 14px;
           cursor: pointer;
         }
-        .bc-faqpanel {
-          margin-bottom: 12px;
-        }
-        .bc-faqoptions {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
+        .bc-faqpanel { margin-bottom: 12px; }
+        .bc-faqoptions { display: flex; gap: 8px; flex-wrap: wrap; }
         .bc-faqoptionbtn {
           border-radius: 999px;
           border: 1px solid #ddd;
@@ -408,36 +424,15 @@ export default function Home() {
           border: 1px solid #d8d8d8;
           border-radius: 18px;
           padding: 12px;
+          position: relative;
         }
-        .bc-messagerow {
-          display: flex;
-          margin-bottom: 12px;
-        }
-        .bc-bubble {
-          max-width: 80%;
-          border-radius: 14px;
-          padding: 10px 12px;
-        }
-        .bc-assistant {
-          background: #e9eaec;
-        }
-        .bc-user {
-          background: #f3e2c8;
-        }
-        .bc-label {
-          font-size: 11px;
-          color: #6b7280;
-          margin-bottom: 5px;
-        }
-        .bc-text {
-          font-size: 15px;
-          line-height: 1.5;
-        }
-        .bc-cursor {
-          display: inline-block;
-          color: #f48c00;
-          font-weight: bold;
-        }
+        .bc-messagerow { display: flex; margin-bottom: 12px; }
+        .bc-bubble { max-width: 80%; border-radius: 14px; padding: 10px 12px; }
+        .bc-assistant { background: #e9eaec; }
+        .bc-user { background: #f3e2c8; }
+        .bc-label { font-size: 11px; color: #6b7280; margin-bottom: 5px; }
+        .bc-text { font-size: 15px; line-height: 1.5; }
+        .bc-cursor { display: inline-block; color: #f48c00; font-weight: bold; }
         .bc-inputrow {
           display: flex;
           gap: 8px;
@@ -467,12 +462,67 @@ export default function Home() {
           font-size: 14px;
           flex-shrink: 0;
         }
+        .bc-sendbtn:disabled { background: #ccc; cursor: not-allowed; }
         .bc-footer {
           text-align: center;
           margin-top: 16px;
           font-size: 11px;
           color: #9ca3af;
         }
+
+        /* Wachtwoordscherm */
+        .bc-lock-overlay {
+          background: #f7f7f7;
+          border: 1px solid #d8d8d8;
+          border-radius: 18px;
+          padding: 24px 20px;
+          text-align: center;
+          margin-top: 12px;
+        }
+        .bc-lock-icon {
+          font-size: 32px;
+          margin-bottom: 12px;
+        }
+        .bc-lock-title {
+          font-size: 17px;
+          font-weight: 700;
+          margin: 0 0 6px 0;
+          color: #111827;
+        }
+        .bc-lock-text {
+          font-size: 14px;
+          color: #6b7280;
+          margin: 0 0 16px 0;
+        }
+        .bc-lock-input {
+          width: 100%;
+          border-radius: 12px;
+          border: 1px solid #ddd;
+          padding: 10px 14px;
+          font-size: 15px;
+          text-align: center;
+          letter-spacing: 2px;
+          margin-bottom: 10px;
+          font-family: inherit;
+        }
+        .bc-lock-input:focus { outline: none; border-color: #f48c00; }
+        .bc-lock-btn {
+          width: 100%;
+          border-radius: 999px;
+          border: none;
+          background: #f48c00;
+          color: white;
+          font-weight: 600;
+          padding: 11px;
+          font-size: 15px;
+          cursor: pointer;
+        }
+        .bc-lock-error {
+          font-size: 13px;
+          color: #e11d48;
+          margin-top: 8px;
+        }
+
         @media (max-width: 400px) {
           .bc-title { font-size: 17px; }
           .bc-tab { font-size: 14px; padding: 9px 6px; }
@@ -493,18 +543,9 @@ export default function Home() {
           </div>
 
           <div className="bc-tabs">
-            <button
-              className={`bc-tab${tab === "opening" ? " bc-tab-active" : ""}`}
-              onClick={() => switchTab("opening")}
-            >Opening</button>
-            <button
-              className={`bc-tab${tab === "bijbod" ? " bc-tab-active" : ""}`}
-              onClick={() => switchTab("bijbod")}
-            >Bijbod</button>
-            <button
-              className={`bc-tab${tab === "uitkomst" ? " bc-tab-active" : ""}`}
-              onClick={() => switchTab("uitkomst")}
-            >Uitkomst</button>
+            <button className={`bc-tab${tab === "opening" ? " bc-tab-active" : ""}`} onClick={() => switchTab("opening")}>Opening</button>
+            <button className={`bc-tab${tab === "bijbod" ? " bc-tab-active" : ""}`} onClick={() => switchTab("bijbod")}>Bijbod</button>
+            <button className={`bc-tab${tab === "uitkomst" ? " bc-tab-active" : ""}`} onClick={() => switchTab("uitkomst")}>Uitkomst</button>
           </div>
 
           <div className="bc-topicrow">
@@ -530,43 +571,65 @@ export default function Home() {
             </div>
           )}
 
-          <div className="bc-chatbox">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className="bc-messagerow"
-                style={{ justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}
-              >
-                <div className={`bc-bubble ${msg.role === "user" ? "bc-user" : "bc-assistant"}`}>
-                  <div className="bc-label">{msg.role === "user" ? "Jij" : "Bridgecoach"}</div>
-                  <div className="bc-text">
-                    {msg.streaming && msg.text === ""
-                      ? <span className="bc-cursor">Even denken...</span>
-                      : renderMarkdown(msg.text)
-                    }
-                    {msg.streaming && msg.text !== "" && (
-                      <span className="bc-cursor">▋</span>
-                    )}
+          {/* Chatbox of wachtwoordscherm */}
+          {isLocked ? (
+            <div className="bc-lock-overlay">
+              <div className="bc-lock-icon">🔒</div>
+              <p className="bc-lock-title">Toegangscode vereist</p>
+              <p className="bc-lock-text">Je hebt 3 gratis vragen gebruikt. Voer de toegangscode in om verder te gaan.</p>
+              <input
+                type="password"
+                className="bc-lock-input"
+                placeholder="Toegangscode"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                onKeyDown={handlePasswordKeyDown}
+                autoFocus
+              />
+              <button className="bc-lock-btn" onClick={checkPassword}>Ontgrendelen</button>
+              {passwordError && <p className="bc-lock-error">{passwordError}</p>}
+            </div>
+          ) : (
+            <div className="bc-chatbox">
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className="bc-messagerow"
+                  style={{ justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}
+                >
+                  <div className={`bc-bubble ${msg.role === "user" ? "bc-user" : "bc-assistant"}`}>
+                    <div className="bc-label">{msg.role === "user" ? "Jij" : "Bridgecoach"}</div>
+                    <div className="bc-text">
+                      {msg.streaming && msg.text === ""
+                        ? <span className="bc-cursor">Even denken...</span>
+                        : renderMarkdown(msg.text)
+                      }
+                      {msg.streaming && msg.text !== "" && (
+                        <span className="bc-cursor">▋</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
+              ))}
+              <div ref={chatEndRef} />
+            </div>
+          )}
 
-          <div className="bc-inputrow">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={getPlaceholder(tab)}
-              className="bc-input"
-              rows={1}
-            />
-            <button onClick={sendMessage} className="bc-sendbtn" disabled={loading}>
-              Verstuur
-            </button>
-          </div>
+          {!isLocked && (
+            <div className="bc-inputrow">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={getPlaceholder(tab)}
+                className="bc-input"
+                rows={1}
+              />
+              <button onClick={sendMessage} className="bc-sendbtn" disabled={loading}>
+                Verstuur
+              </button>
+            </div>
+          )}
 
           <div className="bc-footer">
             Bridgecoach · beta · bridgecoach@ziggo.nl · 2026
@@ -625,63 +688,39 @@ function renderMarkdown(text) {
     const line = lines[i];
     const trimmed = line.trim();
 
-    if (!trimmed) {
-      result.push(<div key={i} style={{ height: "8px" }} />);
-      i++; continue;
-    }
-
+    if (!trimmed) { result.push(<div key={i} style={{ height: "8px" }} />); i++; continue; }
     if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
       result.push(<hr key={i} style={{ border: "none", borderTop: "1px solid #d1d5db", margin: "8px 0" }} />);
       i++; continue;
     }
-
     if (isTableRow(trimmed)) {
       const { rows, endIndex } = parseTableRows(lines, i);
       result.push(
         <div key={i} style={{ overflowX: "auto", margin: "8px 0" }}>
           <table style={{ borderCollapse: "collapse", fontSize: "13px", width: "100%" }}>
-            <thead>
-              <tr>{rows[0]?.map((cell, ci) => (
-                <th key={ci} style={{ background: "#e5e7eb", padding: "6px 10px", textAlign: "left", fontWeight: "600", border: "1px solid #d1d5db" }}>{renderInline(cell)}</th>
+            <thead><tr>{rows[0]?.map((cell, ci) => (
+              <th key={ci} style={{ background: "#e5e7eb", padding: "6px 10px", textAlign: "left", fontWeight: "600", border: "1px solid #d1d5db" }}>{renderInline(cell)}</th>
+            ))}</tr></thead>
+            <tbody>{rows.slice(1).map((row, ri) => (
+              <tr key={ri}>{row.map((cell, ci) => (
+                <td key={ci} style={{ padding: "5px 10px", border: "1px solid #d1d5db" }}>{renderInline(cell)}</td>
               ))}</tr>
-            </thead>
-            <tbody>
-              {rows.slice(1).map((row, ri) => (
-                <tr key={ri}>{row.map((cell, ci) => (
-                  <td key={ci} style={{ padding: "5px 10px", border: "1px solid #d1d5db" }}>{renderInline(cell)}</td>
-                ))}</tr>
-              ))}
-            </tbody>
+            ))}</tbody>
           </table>
         </div>
       );
       i = endIndex; continue;
     }
-
-    if (trimmed.startsWith("### ")) {
-      result.push(<div key={i} style={{ fontSize: "15px", fontWeight: "700", margin: "6px 0 2px 0", color: "#374151" }}>{renderInline(trimmed.slice(4))}</div>);
-      i++; continue;
-    }
-
-    if (trimmed.startsWith("## ")) {
-      result.push(<div key={i} style={{ fontSize: "16px", fontWeight: "700", margin: "8px 0 4px 0" }}>{renderInline(trimmed.slice(3))}</div>);
-      i++; continue;
-    }
-
-    if (trimmed.startsWith("# ")) {
-      result.push(<div key={i} style={{ fontSize: "18px", fontWeight: "700", margin: "10px 0 4px 0" }}>{renderInline(trimmed.slice(2))}</div>);
-      i++; continue;
-    }
-
+    if (trimmed.startsWith("### ")) { result.push(<div key={i} style={{ fontSize: "15px", fontWeight: "700", margin: "6px 0 2px 0", color: "#374151" }}>{renderInline(trimmed.slice(4))}</div>); i++; continue; }
+    if (trimmed.startsWith("## ")) { result.push(<div key={i} style={{ fontSize: "16px", fontWeight: "700", margin: "8px 0 4px 0" }}>{renderInline(trimmed.slice(3))}</div>); i++; continue; }
+    if (trimmed.startsWith("# ")) { result.push(<div key={i} style={{ fontSize: "18px", fontWeight: "700", margin: "10px 0 4px 0" }}>{renderInline(trimmed.slice(2))}</div>); i++; continue; }
     if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
       result.push(<div key={i} style={{ margin: "3px 0", paddingLeft: "4px" }}>• {renderInline(trimmed.slice(2))}</div>);
       i++; continue;
     }
-
     result.push(<div key={i} style={{ margin: "4px 0" }}>{renderInline(trimmed)}</div>);
     i++;
   }
-
   return result;
 }
 
