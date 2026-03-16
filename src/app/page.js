@@ -86,11 +86,7 @@ export default function Home() {
 
     if (!audioRef.current) {
       const audio = new Audio(file);
-
-      audio.addEventListener("ended", () => {
-        setIsAudioPlaying(false);
-      });
-
+      audio.addEventListener("ended", () => setIsAudioPlaying(false));
       audioRef.current = audio;
     }
 
@@ -101,10 +97,7 @@ export default function Home() {
       currentAudio.pause();
 
       const audio = new Audio(file);
-      audio.addEventListener("ended", () => {
-        setIsAudioPlaying(false);
-      });
-
+      audio.addEventListener("ended", () => setIsAudioPlaying(false));
       audioRef.current = audio;
 
       audio
@@ -412,7 +405,7 @@ export default function Home() {
                   {msg.role === "user" ? "Jij" : "Bridgecoach"}
                 </div>
 
-                <div style={styles.text}>{renderSimpleMarkdown(msg.text)}</div>
+                <div style={styles.text}>{renderMarkdown(msg.text)}</div>
               </div>
             </div>
           ))}
@@ -451,6 +444,109 @@ export default function Home() {
     </main>
   );
 }
+
+// ─── Markdown renderer ────────────────────────────────────────────────────────
+
+// Kleurt kaartsymbolen rood of zwart
+function renderInline(text) {
+  // Verwerk **bold** en kaartkleuren
+  const parts = text.split(/(\*\*.*?\*\*|[♠♥♦♣])/g);
+
+  return parts.map((part, i) => {
+    // **bold**
+    if (part.startsWith("**") && part.endsWith("**")) {
+      const inner = part.slice(2, -2);
+      return (
+        <strong key={i} style={{ fontWeight: "700" }}>
+          {renderInline(inner)}
+        </strong>
+      );
+    }
+
+    // Rode kaartsymbolen
+    if (part === "♥" || part === "♦") {
+      return (
+        <span key={i} style={{ color: "#e11d48", fontWeight: "600" }}>
+          {part}
+        </span>
+      );
+    }
+
+    // Zwarte kaartsymbolen
+    if (part === "♠" || part === "♣") {
+      return (
+        <span key={i} style={{ color: "#111827", fontWeight: "600" }}>
+          {part}
+        </span>
+      );
+    }
+
+    return <span key={i}>{part}</span>;
+  });
+}
+
+function renderMarkdown(text) {
+  const lines = text.split("\n");
+
+  return lines.map((line, index) => {
+    const trimmed = line.trim();
+
+    // Lege regel
+    if (!trimmed) {
+      return <div key={index} style={{ height: "8px" }} />;
+    }
+
+    // Horizontale lijn ---
+    if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
+      return <hr key={index} style={styles.hr} />;
+    }
+
+    // ### Kop (h3)
+    if (trimmed.startsWith("### ")) {
+      return (
+        <div key={index} style={styles.h3}>
+          {renderInline(trimmed.slice(4))}
+        </div>
+      );
+    }
+
+    // ## Kop (h2)
+    if (trimmed.startsWith("## ")) {
+      return (
+        <div key={index} style={styles.h2}>
+          {renderInline(trimmed.slice(3))}
+        </div>
+      );
+    }
+
+    // # Kop (h1)
+    if (trimmed.startsWith("# ")) {
+      return (
+        <div key={index} style={styles.h1}>
+          {renderInline(trimmed.slice(2))}
+        </div>
+      );
+    }
+
+    // Lijstitem met - of •
+    if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
+      return (
+        <div key={index} style={styles.listItem}>
+          • {renderInline(trimmed.slice(2))}
+        </div>
+      );
+    }
+
+    // Gewone alinea
+    return (
+      <div key={index} style={styles.paragraph}>
+        {renderInline(trimmed)}
+      </div>
+    );
+  });
+}
+
+// ─── Subcomponenten ───────────────────────────────────────────────────────────
 
 function TabButton({ label, active, onClick }) {
   return (
@@ -507,61 +603,7 @@ function PauseIcon({ size = 16 }) {
   );
 }
 
-function renderSimpleMarkdown(text) {
-  function renderCards(line) {
-    return line.split(/(♠|♥|♦|♣)/g).map((part, i) => {
-      if (part === "♥" || part === "♦") {
-        return (
-          <span key={i} style={{ color: "#e11d48", fontWeight: "600" }}>
-            {part}
-          </span>
-        );
-      }
-
-      if (part === "♠" || part === "♣") {
-        return (
-          <span key={i} style={{ color: "#111827", fontWeight: "600" }}>
-            {part}
-          </span>
-        );
-      }
-
-      return <span key={i}>{part}</span>;
-    });
-  }
-
-  const lines = text.split("\n");
-
-  return lines.map((line, index) => {
-    const trimmed = line.trim();
-
-    if (!trimmed) {
-      return <div key={index} style={{ height: "8px" }} />;
-    }
-
-    if (trimmed.startsWith("## ")) {
-      return (
-        <div key={index} style={styles.h2}>
-          {renderCards(trimmed.replace("## ", ""))}
-        </div>
-      );
-    }
-
-    if (trimmed.startsWith("- ")) {
-      return (
-        <div key={index} style={styles.listItem}>
-          • {renderCards(trimmed.replace("- ", ""))}
-        </div>
-      );
-    }
-
-    return (
-      <div key={index} style={styles.paragraph}>
-        {renderCards(trimmed)}
-      </div>
-    );
-  });
-}
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = {
 
@@ -589,7 +631,6 @@ header: {
   background: "#ffffff",
   padding: "16px",
   borderRadius: "14px",
- 
 },
 
 brandBlock: {
@@ -768,10 +809,24 @@ footer: {
   color: "#9ca3af",
 },
 
+// Markdown stijlen
+h1: {
+  fontSize: "18px",
+  fontWeight: "700",
+  margin: "10px 0 4px 0",
+},
+
 h2: {
   fontSize: "16px",
   fontWeight: "700",
-  margin: "6px 0",
+  margin: "8px 0 4px 0",
+},
+
+h3: {
+  fontSize: "15px",
+  fontWeight: "700",
+  margin: "6px 0 2px 0",
+  color: "#374151",
 },
 
 paragraph: {
@@ -779,7 +834,14 @@ paragraph: {
 },
 
 listItem: {
-  margin: "4px 0",
-}
+  margin: "3px 0",
+  paddingLeft: "4px",
+},
+
+hr: {
+  border: "none",
+  borderTop: "1px solid #d1d5db",
+  margin: "8px 0",
+},
 
 };
