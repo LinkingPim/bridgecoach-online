@@ -49,6 +49,7 @@ export default function Home() {
 
       if (data.success) {
         setIsLocked(false);
+        setQuestionCount(0);
         setPasswordInput("");
         setPasswordError("");
       } else {
@@ -216,7 +217,13 @@ export default function Home() {
 
   async function sendMessage() {
     const trimmed = input.trim();
-    if (!trimmed || loading || isLocked) return;
+    if (!trimmed || loading) return;
+
+    // Vergrendel VOOR het versturen van de 4e vraag
+    if (questionCount >= 3) {
+      setIsLocked(true);
+      return;
+    }
 
     resetFaq();
     setMessages((prev) => [...prev, { role: "user", text: trimmed, source: "user" }]);
@@ -294,9 +301,8 @@ export default function Home() {
         ]);
       }
 
-      const newCount = questionCount + 1;
-      setQuestionCount(newCount);
-      if (newCount >= 3) setIsLocked(true);
+      // Tel pas op na volledig antwoord
+      setQuestionCount((prev) => prev + 1);
 
     } catch (error) {
       setMessages((prev) => {
@@ -485,7 +491,6 @@ export default function Home() {
 
 function renderInline(text) {
   const parts = text.split(/(♠️|♥️|♦️|♣️|\*\*.*?\*\*|[♠♥♦♣])/g);
-
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={i} style={{ fontWeight: "700" }}>{renderInline(part.slice(2, -2))}</strong>;
