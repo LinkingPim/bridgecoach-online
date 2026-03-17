@@ -11,6 +11,7 @@ export default function Home() {
   const [isLocked, setIsLocked] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const [messages, setMessages] = useState([
     {
@@ -32,14 +33,31 @@ export default function Home() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading, faqOptions]);
 
-  function checkPassword() {
-    const correct = process.env.NEXT_PUBLIC_ACCESS_CODE || "bridge2026";
-    if (passwordInput === correct) {
-      setIsLocked(false);
-      setPasswordInput("");
-      setPasswordError("");
-    } else {
-      setPasswordError("Onjuiste toegangscode. Probeer het opnieuw.");
+  async function checkPassword() {
+    if (!passwordInput.trim()) return;
+    setPasswordLoading(true);
+    setPasswordError("");
+
+    try {
+      const res = await fetch("/api/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: passwordInput }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setIsLocked(false);
+        setPasswordInput("");
+        setPasswordError("");
+      } else {
+        setPasswordError("Onjuiste toegangscode. Probeer het opnieuw.");
+      }
+    } catch (error) {
+      setPasswordError("Er ging iets mis. Probeer het opnieuw.");
+    } finally {
+      setPasswordLoading(false);
     }
   }
 
@@ -307,46 +325,23 @@ export default function Home() {
     <>
       <style>{`
         * { box-sizing: border-box; }
-        .bc-page {
-          min-height: 100vh;
-          background: #f2f2f2;
-          padding: 20px 12px;
-          font-family: Inter, system-ui, Arial, sans-serif;
-        }
-        .bc-wrapper {
-          max-width: 580px;
-          margin: 0 auto;
-          background: #ffffff;
-          border-radius: 20px;
-          padding: 20px 16px;
-          box-shadow: 0 8px 30px rgba(0,0,0,0.05);
-        }
+        .bc-page { min-height: 100vh; background: #f2f2f2; padding: 20px 12px; font-family: Inter, system-ui, Arial, sans-serif; }
+        .bc-wrapper { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 20px; padding: 20px 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); }
         .bc-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
         .bc-logo { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
         .bc-title { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 0.4px; }
         .bc-subtitle { margin: 2px 0 0 0; font-size: 12px; color: #6b7280; }
         .bc-tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-        .bc-tab {
-          flex: 1; min-width: 80px; padding: 10px 8px;
-          border-radius: 999px; border: 1px solid #ddd; background: #eeeeee;
-          font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; white-space: nowrap;
-        }
+        .bc-tab { flex: 1; min-width: 80px; padding: 10px 8px; border-radius: 999px; border: 1px solid #ddd; background: #eeeeee; font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; white-space: nowrap; }
         .bc-tab-active { background: #f48c00; color: white; border-color: #f48c00; }
         .bc-topicrow { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-        .bc-audiobtn {
-          display: flex; align-items: center; gap: 6px;
-          border-radius: 999px; border: 1px solid #ddd; background: #ffffff;
-          padding: 8px 14px; font-size: 14px; cursor: pointer; white-space: nowrap;
-        }
+        .bc-audiobtn { display: flex; align-items: center; gap: 6px; border-radius: 999px; border: 1px solid #ddd; background: #ffffff; padding: 8px 14px; font-size: 14px; cursor: pointer; white-space: nowrap; }
         .bc-faqbtn { border-radius: 999px; border: 1px solid #ddd; background: #ffffff; padding: 8px 14px; font-size: 14px; cursor: pointer; }
         .bc-faqpanel { margin-bottom: 12px; }
         .bc-faqoptions { display: flex; gap: 8px; flex-wrap: wrap; }
         .bc-faqoptionbtn { border-radius: 999px; border: 1px solid #ddd; background: #ffffff; padding: 6px 12px; font-size: 13px; cursor: pointer; }
         .bc-faqbackbtn { border-radius: 999px; border: 1px solid #ddd; background: #ffffff; padding: 6px 10px; font-size: 12px; margin-bottom: 8px; cursor: pointer; }
-        .bc-chatbox {
-          min-height: 300px; max-height: 400px; overflow-y: auto;
-          background: #f7f7f7; border: 1px solid #d8d8d8; border-radius: 18px; padding: 12px;
-        }
+        .bc-chatbox { min-height: 300px; max-height: 400px; overflow-y: auto; background: #f7f7f7; border: 1px solid #d8d8d8; border-radius: 18px; padding: 12px; }
         .bc-messagerow { display: flex; margin-bottom: 12px; }
         .bc-bubble { max-width: 80%; border-radius: 14px; padding: 10px 12px; }
         .bc-assistant { background: #e9eaec; }
@@ -355,35 +350,18 @@ export default function Home() {
         .bc-text { font-size: 15px; line-height: 1.5; }
         .bc-cursor { display: inline-block; color: #f48c00; font-weight: bold; }
         .bc-inputrow { display: flex; gap: 8px; margin-top: 12px; align-items: flex-end; }
-        .bc-input {
-          flex: 1; border-radius: 20px; border: 1px solid #ddd;
-          padding: 10px 14px; font-size: 14px; background: #ffffff;
-          resize: none; font-family: inherit; min-width: 0;
-        }
-        .bc-sendbtn {
-          border-radius: 999px; border: none; background: #f48c00; color: white;
-          font-weight: 600; padding: 10px 16px; cursor: pointer;
-          white-space: nowrap; font-size: 14px; flex-shrink: 0;
-        }
+        .bc-input { flex: 1; border-radius: 20px; border: 1px solid #ddd; padding: 10px 14px; font-size: 14px; background: #ffffff; resize: none; font-family: inherit; min-width: 0; }
+        .bc-sendbtn { border-radius: 999px; border: none; background: #f48c00; color: white; font-weight: 600; padding: 10px 16px; cursor: pointer; white-space: nowrap; font-size: 14px; flex-shrink: 0; }
         .bc-sendbtn:disabled { background: #ccc; cursor: not-allowed; }
         .bc-footer { text-align: center; margin-top: 16px; font-size: 11px; color: #9ca3af; }
-        .bc-lock-overlay {
-          background: #f7f7f7; border: 1px solid #d8d8d8; border-radius: 18px;
-          padding: 24px 20px; text-align: center; margin-top: 12px;
-        }
+        .bc-lock-overlay { background: #f7f7f7; border: 1px solid #d8d8d8; border-radius: 18px; padding: 24px 20px; text-align: center; margin-top: 12px; }
         .bc-lock-icon { font-size: 32px; margin-bottom: 12px; }
         .bc-lock-title { font-size: 17px; font-weight: 700; margin: 0 0 6px 0; color: #111827; }
         .bc-lock-text { font-size: 14px; color: #6b7280; margin: 0 0 16px 0; }
-        .bc-lock-input {
-          width: 100%; border-radius: 12px; border: 1px solid #ddd;
-          padding: 10px 14px; font-size: 15px; text-align: center;
-          letter-spacing: 2px; margin-bottom: 10px; font-family: inherit;
-        }
+        .bc-lock-input { width: 100%; border-radius: 12px; border: 1px solid #ddd; padding: 10px 14px; font-size: 15px; text-align: center; letter-spacing: 2px; margin-bottom: 10px; font-family: inherit; }
         .bc-lock-input:focus { outline: none; border-color: #f48c00; }
-        .bc-lock-btn {
-          width: 100%; border-radius: 999px; border: none; background: #f48c00;
-          color: white; font-weight: 600; padding: 11px; font-size: 15px; cursor: pointer;
-        }
+        .bc-lock-btn { width: 100%; border-radius: 999px; border: none; background: #f48c00; color: white; font-weight: 600; padding: 11px; font-size: 15px; cursor: pointer; }
+        .bc-lock-btn:disabled { background: #ccc; cursor: not-allowed; }
         .bc-lock-error { font-size: 13px; color: #e11d48; margin-top: 8px; }
         @media (max-width: 400px) {
           .bc-title { font-size: 17px; }
@@ -447,7 +425,9 @@ export default function Home() {
                 onKeyDown={handlePasswordKeyDown}
                 autoFocus
               />
-              <button className="bc-lock-btn" onClick={checkPassword}>Ontgrendelen</button>
+              <button className="bc-lock-btn" onClick={checkPassword} disabled={passwordLoading}>
+                {passwordLoading ? "Controleren..." : "Ontgrendelen"}
+              </button>
               {passwordError && <p className="bc-lock-error">{passwordError}</p>}
             </div>
           ) : (
@@ -504,18 +484,15 @@ export default function Home() {
 // ─── Markdown renderer ────────────────────────────────────────────────────────
 
 function renderInline(text) {
-  // Match emoji-varianten (♥️ ♦️ ♠️ ♣️) én gewone symbolen (♥ ♦ ♠ ♣)
   const parts = text.split(/(♠️|♥️|♦️|♣️|\*\*.*?\*\*|[♠♥♦♣])/g);
 
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={i} style={{ fontWeight: "700" }}>{renderInline(part.slice(2, -2))}</strong>;
     }
-    // Rood: harten en ruiten (met en zonder emoji selector)
     if (part === "♥" || part === "♥️" || part === "♦" || part === "♦️") {
       return <span key={i} style={{ color: "#e11d48", fontWeight: "600" }}>{part}</span>;
     }
-    // Zwart: schoppen en klaveren (met en zonder emoji selector)
     if (part === "♠" || part === "♠️" || part === "♣" || part === "♣️") {
       return <span key={i} style={{ color: "#111827", fontWeight: "600" }}>{part}</span>;
     }
@@ -588,8 +565,6 @@ function renderMarkdown(text) {
   }
   return result;
 }
-
-// ─── Subcomponenten ───────────────────────────────────────────────────────────
 
 function HeadphoneIcon({ size = 16 }) {
   return (
