@@ -243,7 +243,7 @@ ${knowledgeContext}
       async start(controller) {
         try {
           const openaiStream = await client.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-5-mini",
             messages,
             max_tokens: 800,
             stream: true,
